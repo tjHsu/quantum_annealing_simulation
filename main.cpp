@@ -152,6 +152,7 @@ void spin_system::single_spin_op(double t, int t_on){
       because of reading convenience I didn't do so.
     */
     double norm=0;
+    //set the initial transverse field
     double h_x_init=0.;
     if (!t_on) {
       //without t dependent
