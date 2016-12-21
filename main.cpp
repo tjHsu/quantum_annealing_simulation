@@ -45,19 +45,40 @@ public:
 /* Don't use class complex<double>. It is terribly slow */
 
 int main(int argc, char* argv[]){
+
 spin_system test;
-test.initialize(8,1000,0.01);
-for (int i = 0; i < (int) pow(2,5); i++) {
-  cout<<i<<"th real"<<test.psi_real[i]<<endl;
-  cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
+
+test.initialize(8,1000,0.1);
+double norm=0.;
+
+for (int i = 0; i < (int) pow(2,8); i++) {
+  norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+
+  // cout<<i<<"th real"<<test.psi_real[i]<<endl;
+  // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
 }
+cout<<"norm before run = "<<norm<<endl;
 
 test.run(atoi(argv[1]));
 
-for (int i = 0; i < (int) pow(2,5); i++) {
-  cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
-  cout<<i<<"th imag after ope "<<test.psi_imaginary[i]<<endl;
+norm =0.;
+
+double max=0.;
+int location;
+for (int i = 0; i < (int) pow(2,8); i++) {
+  double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  norm+=tmp;
+  if (tmp > max) {
+    max = tmp;
+    location = i;
+  }
+  // cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
+  // cout<<i<<"th imag after ope "<<test.psi_imaginary[i]<<endl;
 }
+cout<<"norm after run = "<<norm<<endl;
+cout<<"max after run = "<<max<<endl;
+cout<<"location after run = "<<location<<endl;
+
 // // test.test();
 // double* J_array;
 // J_array = new double [64];
@@ -130,15 +151,15 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     h_z[i]=0.;
   }
 
-  read(N*N,J_z,"J.txt");
-  read(N,h_z,"h.txt");
+  read(N*N,J_z,"J1.txt");
+  read(N,h_z,"h1.txt");
 
   for (int i = 0; i < N*N; i++){
-    cout<<J_z[i]<<endl;
+    // cout<<J_z[i]<<endl;
   }
 
   for (int i = 0; i < N; i++){
-    cout<<h_z[i]<<endl;
+    // cout<<h_z[i]<<endl;
   }
 
   /* Other variables:
@@ -197,14 +218,14 @@ void spin_system::single_spin_op(double t, int t_on){
     else {
       // cout<<"Delta outside = "<<Delta<<endl;
       // cout<<"tau = "<<tau<<endl;
-      ss_operator_real[0]      = cos(tau*norm*0.5);
-      ss_operator_real[1]      = Delta*h_y[k]*sin(tau*norm*0.5)/norm;
-      ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*norm*0.5)/norm;
-      ss_operator_real[3]      = cos(tau*norm*0.5);
-      ss_operator_imaginary[0] = Delta*h_z[k]*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[1] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[2] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[3] = -1*Delta*h_z[k]*sin(tau*norm*0.5)/norm;
+      ss_operator_real[0]      = cos(tau*0.5*norm*0.5);
+      ss_operator_real[1]      = Delta*h_y[k]*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_real[3]      = cos(tau*0.5*norm*0.5);
+      ss_operator_imaginary[0] = Delta*h_z[k]*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_imaginary[1] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_imaginary[2] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_imaginary[3] = -1*Delta*h_z[k]*sin(tau*0.5*norm*0.5)/norm;
     }
     for (int l = 0; l < nofstates; l+=2) {
       /* get index for the second place we need to operate ss_operator on.
@@ -257,6 +278,11 @@ void spin_system::double_spin_op(double t, int t_on){
       */
 
       double a=J_z[k+l*N]/4.;
+      if (abs(J_z[k+l*N])>1e-8) {
+        cout<<"k ="<<k<<endl;
+        cout<<"l ="<<l<<endl;
+        cout<<"end"<<endl;
+      }
       double b=(J_x[k+l*N]-J_y[k+l*N])/4.;
       double c=(J_x[k+l*N]+J_y[k+l*N])/4.;
 
@@ -368,7 +394,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
   /* Check the read values.
   */
   for (i = 0; i < N; i++) {
-    // cout<<Array[i]<< endl;
+    cout<<filename<<" "<<i<<"th element ="<<Array[i]<< endl;
   }
 }
 
