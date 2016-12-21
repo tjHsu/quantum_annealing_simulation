@@ -1,4 +1,4 @@
-//#include "spinsys.h" 
+//#include "spinsys.h"
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -31,7 +31,7 @@ private:
   double Delta;
 
 public:
-  void initialize(int,double,double);
+  void initialize(int ,double ,double);
   void test();
   void single_spin_op(double, int);
   void double_spin_op(double, int);
@@ -46,7 +46,7 @@ public:
 
 int main(int argc, char* argv[]){
 spin_system test;
-test.initialize(5,10,0.018);
+test.initialize(8,1000,0.01);
 for (int i = 0; i < (int) pow(2,5); i++) {
   cout<<i<<"th real"<<test.psi_real[i]<<endl;
   cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
@@ -58,11 +58,15 @@ for (int i = 0; i < (int) pow(2,5); i++) {
   cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
   cout<<i<<"th imag after ope "<<test.psi_imaginary[i]<<endl;
 }
-// test.test();
-double* array;
-array = new double [25];
-test.read(25,array,"J.txt");
-cout<<"reutrn "<<0<<endl;
+// // test.test();
+// double* J_array;
+// J_array = new double [64];
+// test.read(64,J_array,"J.txt");
+// double* h_array;
+// h_array = new double [8];
+// test.read(8,h_array,"h.txt");
+//
+// cout<<"reutrn "<<0<<endl;
 return 0;
 }
 
@@ -83,7 +87,7 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
-    psi_real[i]      = pow(nofstates,-0.5);
+    psi_real[i]      = pow(nofstates, -0.5);
     psi_imaginary[i] = 0;
   }
 
@@ -108,13 +112,13 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     and the factor h for single spin Hamiltonian.
     J should have size as N*(N-1) and the size of h is simply N.
   */
-  J_x = new double [N*(N-1)];
-  J_y = new double [N*(N-1)];
-  J_z = new double [N*(N-1)];
+  J_x = new double [N*N];
+  J_y = new double [N*N];
+  J_z = new double [N*N];
   h_x = new double [N];
   h_y = new double [N];
   h_z = new double [N];
-  for (int i = 0; i < N*(N-1); i++){
+  for (int i = 0; i < N*N; i++){
     J_x[i] = 0.;
     J_y[i] = 0.;
     J_z[i] = 0.;
@@ -124,6 +128,17 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     h_x[i]=0.;
     h_y[i]=0.;
     h_z[i]=0.;
+  }
+
+  read(N*N,J_z,"J.txt");
+  read(N,h_z,"h.txt");
+
+  for (int i = 0; i < N*N; i++){
+    cout<<J_z[i]<<endl;
+  }
+
+  for (int i = 0; i < N; i++){
+    cout<<h_z[i]<<endl;
   }
 
   /* Other variables:
@@ -153,41 +168,43 @@ void spin_system::single_spin_op(double t, int t_on){
     */
     double norm=0;
     //set the initial transverse field
-    double h_x_init=0.;
+    double h_x_init=1.;
     if (!t_on) {
       //without t dependent
-      norm=sqrt(h_x[i1]*h_x[i1]+h_y[i1]*h_y[i1]+h_z[i1]*h_z[i1]);
+      norm=sqrt(h_x[k]*h_x[k]+h_y[k]*h_y[k]+h_z[k]*h_z[k]);
       // cout<<"t_on = "<<t_on<<"off"<<endl;
     }
     else {
       //with t dependent
       Delta = t/T;
-      norm=sqrt(((1-Delta)*h_x_init+Delta*h_x[i1])*((1-Delta)*h_x_init+Delta*h_x[i1])+Delta*h_y[i1]*Delta*h_y[i1]+Delta*h_z[i1]*Delta*h_z[i1]);
-      // cout<<"t_on = "<<t_on<<"on"<<endl;
+      Gamma = 1-Delta;
+      norm=sqrt((Gamma*h_x_init+Delta*h_x[k])*(Gamma*h_x_init+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
+      // cout<<"Delta inside = "<<Delta<<endl;
     }
 
 
-    if (norm-0<1e-15) {
-      ss_operator_real[0]      = cos(tau*norm*0.5);
+    if (norm-0<1e-10) {
+      ss_operator_real[0]      = 1;//cos(tau*norm*0.5);
       ss_operator_real[1]      = 0;
       ss_operator_real[2]      = 0;
-      ss_operator_real[3]      = cos(tau*norm*0.5);
+      ss_operator_real[3]      = 1;//cos(tau*norm*0.5);
       ss_operator_imaginary[0] = 0;
-      ss_operator_imaginary[0] = 0;
-      ss_operator_imaginary[0] = 0;
-      ss_operator_imaginary[0] = 0;
+      ss_operator_imaginary[1] = 0;
+      ss_operator_imaginary[2] = 0;
+      ss_operator_imaginary[3] = 0;
     }
 
     else {
-
+      // cout<<"Delta outside = "<<Delta<<endl;
+      // cout<<"tau = "<<tau<<endl;
       ss_operator_real[0]      = cos(tau*norm*0.5);
-      ss_operator_real[1]      = Delta*h_y[i1]*sin(tau*norm*0.5)/norm;
-      ss_operator_real[2]      = -1*Delta*h_y[i1]*sin(tau*norm*0.5)/norm;
+      ss_operator_real[1]      = Delta*h_y[k]*sin(tau*norm*0.5)/norm;
+      ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*norm*0.5)/norm;
       ss_operator_real[3]      = cos(tau*norm*0.5);
-      ss_operator_imaginary[0] = Delta*h_z[i1]*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[0] = ((1-Delta)*h_x_init+Delta*h_x[i1])*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[0] = ((1-Delta)*h_x_init+Delta*h_x[i1])*sin(tau*norm*0.5)/norm;
-      ss_operator_imaginary[0] = -1*Delta*h_z[i1]*sin(tau*norm*0.5)/norm;
+      ss_operator_imaginary[0] = Delta*h_z[k]*sin(tau*norm*0.5)/norm;
+      ss_operator_imaginary[1] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*norm*0.5)/norm;
+      ss_operator_imaginary[2] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*norm*0.5)/norm;
+      ss_operator_imaginary[3] = -1*Delta*h_z[k]*sin(tau*norm*0.5)/norm;
     }
     for (int l = 0; l < nofstates; l+=2) {
       /* get index for the second place we need to operate ss_operator on.
@@ -229,6 +246,8 @@ void spin_system::single_spin_op(double t, int t_on){
 /* to operate J*S.*S
 */
 void spin_system::double_spin_op(double t, int t_on){
+  Delta = t/T;
+  // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
     for (int l = k; l < N; l++) {
 
@@ -236,11 +255,13 @@ void spin_system::double_spin_op(double t, int t_on){
         In principal, we can save some computing time here,
         because of reading convenience I didn't do so.
       */
-      double a=J_z[k+l*N]/4;
-      double b=(J_x[k+l*N]-J_y[k+l*N])/4;
-      double c=(J_x[k+l*N]+J_y[k+l*N])/4;
 
-      Delta = t/T;
+      double a=J_z[k+l*N]/4.;
+      double b=(J_x[k+l*N]-J_y[k+l*N])/4.;
+      double c=(J_x[k+l*N]+J_y[k+l*N])/4.;
+
+
+
 
       ds_operator_real[0]      = cos( a*Delta*tau)*cos(b*Delta*tau);
       ds_operator_real[1]      =-sin( a*Delta*tau)*sin(b*Delta*tau);
@@ -347,7 +368,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
   /* Check the read values.
   */
   for (i = 0; i < N; i++) {
-    // cout<<Array[i]<<endl;
+    // cout<<Array[i]<< endl;
   }
 }
 
