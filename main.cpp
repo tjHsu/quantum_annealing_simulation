@@ -1,4 +1,4 @@
-//#include "spinsys.h"
+//#include "spinsys.h" test
 #include <string>
 #include <iostream>
 #include <iomanip>
