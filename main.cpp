@@ -64,12 +64,16 @@ test.run(atoi(argv[1]));
 norm =0.;
 
 double max=0.;
+// double second=0.;
 int location;
+// int location_second;
 for (int i = 0; i < (int) pow(2,8); i++) {
   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
   norm+=tmp;
   if (tmp > max) {
+    // second = max;
     max = tmp;
+    // location_second=location;
     location = i;
   }
   // cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
@@ -78,7 +82,8 @@ for (int i = 0; i < (int) pow(2,8); i++) {
 cout<<"norm after run = "<<norm<<endl;
 cout<<"max after run = "<<max<<endl;
 cout<<"location after run = "<<location<<endl;
-
+// cout<<"second max after run = "<<second<<endl;
+// cout<<"location for second after run = "<<location_second<<endl;
 // // test.test();
 // double* J_array;
 // J_array = new double [64];
@@ -200,11 +205,11 @@ void spin_system::single_spin_op(double t, int t_on){
       Delta = t/T;
       Gamma = 1-Delta;
       norm=sqrt((Gamma*h_x_init+Delta*h_x[k])*(Gamma*h_x_init+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
-      // cout<<"Delta inside = "<<Delta<<endl;
+      // cout<<"h_z["<<k<<"] = "<<h_z[k]<<endl;
     }
 
 
-    if (norm-0<1e-10) {
+    if (norm-0<1e-14) {
       ss_operator_real[0]      = 1;//cos(tau*norm*0.5);
       ss_operator_real[1]      = 0;
       ss_operator_real[2]      = 0;
@@ -218,14 +223,14 @@ void spin_system::single_spin_op(double t, int t_on){
     else {
       // cout<<"Delta outside = "<<Delta<<endl;
       // cout<<"tau = "<<tau<<endl;
-      ss_operator_real[0]      = cos(tau*0.5*norm*0.5);
-      ss_operator_real[1]      = Delta*h_y[k]*sin(tau*0.5*norm*0.5)/norm;
-      ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*0.5*norm*0.5)/norm;
-      ss_operator_real[3]      = cos(tau*0.5*norm*0.5);
-      ss_operator_imaginary[0] = Delta*h_z[k]*sin(tau*0.5*norm*0.5)/norm;
-      ss_operator_imaginary[1] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm*0.5)/norm;
-      ss_operator_imaginary[2] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm*0.5)/norm;
-      ss_operator_imaginary[3] = -1*Delta*h_z[k]*sin(tau*0.5*norm*0.5)/norm;
+      ss_operator_real[0]      = cos(tau*0.5*norm);
+      ss_operator_real[1]      = Delta*h_y[k]*sin(tau*0.5*norm)/norm;
+      ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*0.5*norm)/norm;
+      ss_operator_real[3]      = cos(tau*0.5*norm);
+      ss_operator_imaginary[0] = Delta*h_z[k]*sin(tau*0.5*norm)/norm;
+      ss_operator_imaginary[1] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm)/norm;
+      ss_operator_imaginary[2] = (Gamma*h_x_init+Delta*h_x[k])*sin(tau*0.5*norm)/norm;
+      ss_operator_imaginary[3] = -1*Delta*h_z[k]*sin(tau*0.5*norm)/norm;
     }
     for (int l = 0; l < nofstates; l+=2) {
       /* get index for the second place we need to operate ss_operator on.
@@ -277,33 +282,33 @@ void spin_system::double_spin_op(double t, int t_on){
         because of reading convenience I didn't do so.
       */
 
-      double a=J_z[k+l*N]/4.;
-      if (abs(J_z[k+l*N])>1e-8) {
-        cout<<"k ="<<k<<endl;
-        cout<<"l ="<<l<<endl;
-        cout<<"end"<<endl;
-      }
-      double b=(J_x[k+l*N]-J_y[k+l*N])/4.;
-      double c=(J_x[k+l*N]+J_y[k+l*N])/4.;
+      double a=J_z[k+l*N]/1.;//4.;
+      // if (abs(J_z[k+l*N])>1e-8) {
+      //   cout<<"k ="<<k<<endl;
+      //   cout<<"l ="<<l<<endl;
+      //   cout<<"end"<<endl;
+      // }
+      double b=(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+      double c=(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
 
 
 
       ds_operator_real[0]      = cos( a*Delta*tau)*cos(b*Delta*tau);
-      ds_operator_real[1]      =-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[1]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_real[2]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_real[3]      =-sin(-a*Delta*tau)*sin(c*Delta*tau);
-      ds_operator_real[4]      =-sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[3]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[4]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
       ds_operator_real[5]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_real[6]      =-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[6]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_real[7]      = cos( a*Delta*tau)*cos(b*Delta*tau);
       ds_operator_imaginary[0] = sin( a*Delta*tau)*cos(b*Delta*tau);
-      ds_operator_imaginary[1] = cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_imaginary[2] = sin(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_imaginary[3] = cos(-a*Delta*tau)*sin(c*Delta*tau);
-      ds_operator_imaginary[4] = cos(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
       ds_operator_imaginary[5] = sin(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_imaginary[6] = cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_imaginary[7] = sin( a*Delta*tau)*cos(b*Delta*tau);
 
       int nii=(int) pow(2,k);
@@ -322,7 +327,7 @@ void spin_system::double_spin_op(double t, int t_on){
         n2=n0+njj;
         n3=n1+njj;
 
-        /* Following the similar manner in singli_spin_op,
+        /* Following the similar manner in single_spin_op,
           I create several temperory variables to store values of psi
         */
         double psi_real_temp_n0      = 0;
@@ -394,7 +399,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
   /* Check the read values.
   */
   for (i = 0; i < N; i++) {
-    cout<<filename<<" "<<i<<"th element ="<<Array[i]<< endl;
+    // cout<<filename<<" "<<i<<"th element ="<<Array[i]<< endl;
   }
 }
 
