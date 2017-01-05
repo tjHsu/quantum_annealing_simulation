@@ -59,6 +59,7 @@ for (int i = 0; i < (int) pow(2,8); i++) {
 }
 cout<<"norm before run = "<<norm<<endl;
 
+
 test.run(atoi(argv[1]));
 
 norm =0.;
@@ -156,8 +157,8 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     h_z[i]=0.;
   }
 
-  read(N*N,J_z,"J1.txt");
-  read(N,h_z,"h1.txt");
+  read(N*N,J_z,"J2.txt");
+  read(N,h_z,"h2.txt");
 
   for (int i = 0; i < N*N; i++){
     // cout<<J_z[i]<<endl;
@@ -406,12 +407,26 @@ void spin_system::read(int N, double* Array, char const * filename ){
 
 /* The main process to run the simulation
   16.12.2016: I haven't add the time evolution part. It should be added after.
+  26.12.2076: time evolution part added.
 */
 void spin_system::run(int t_on){
+  ofstream out_data("gs_t.dat");
   for(double t=0. ; t<T ; t+=tau){
     single_spin_op(t,t_on);
     double_spin_op(t,t_on);
     single_spin_op(t,t_on);
+    double gs=0.;
+
+
+    gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
+
+      // cout<<i<<"th real"<<test.psi_real[i]<<endl;
+      // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
+
+    out_data<<gs<<endl;
+    gs =0.;
+
+
     // cout<<t<<endl;
   }
 }
