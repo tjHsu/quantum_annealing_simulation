@@ -37,6 +37,9 @@ public:
   void test();
   void single_spin_op(double);
   void double_spin_op(double);
+  void double_spin_op_x(double);
+  void double_spin_op_y(double);
+  void double_spin_op_z(double);
   void energy(double);
   void run();
   void read(int,double*,char const *);
@@ -56,63 +59,63 @@ public:
 
 int main(int argc, char* argv[]){
 
-spin_system test;
+  spin_system test;
 
-test.initialize(8,1000.,0.1);
+  test.initialize(8,1000.,0.01);
 
-double norm=0.;
+  double norm=0.;
 
-for (int i = 0; i < (int) pow(2,8); i++) {
-  norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  for (int i = 0; i < (int) pow(2,8); i++) {
+    norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
 
-  // cout<<i<<"th real"<<test.psi_real[i]<<endl;
-  // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
-}
-cout<<"norm before run = "<<norm<<endl;
-time_t start=time(0);
-clock_t t;
-t = clock();
-test.run();
-t =clock()-t;
-time_t end=time(0);
-double time=difftime(end,start);
-
-cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-cout<<"costed me "<<time<<" second in real time"<<endl;
-
-norm =0.;
-
-double max=0.;
-// double second=0.;
-int location;
-// int location_second;
-for (int i = 0; i < (int) pow(2,8); i++) {
-  double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  norm+=tmp;
-  if (tmp > max) {
-    // second = max;
-    max = tmp;
-    // location_second=location;
-    location = i;
+    // cout<<i<<"th real"<<test.psi_real[i]<<endl;
+    // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
   }
-  // cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
-  // cout<<i<<"th imag after ope "<<test.psi_imaginary[i]<<endl;
-}
-cout<<"norm after run = "<<norm<<endl;
-cout<<"max after run = "<<max<<endl;
-cout<<"location after run = "<<location<<endl;
-// cout<<"second max after run = "<<second<<endl;
-// cout<<"location for second after run = "<<location_second<<endl;
-// // test.test();
-// double* J_array;
-// J_array = new double [64];
-// test.read(64,J_array,"J.txt");
-// double* h_array;
-// h_array = new double [8];
-// test.read(8,h_array,"h.txt");
-//
-// cout<<"reutrn "<<0<<endl;
-return 0;
+  cout<<"norm before run = "<<norm<<endl;
+  time_t start=time(0);
+  clock_t t;
+  t = clock();
+  test.run();
+  t =clock()-t;
+  time_t end=time(0);
+  double time=difftime(end,start);
+
+  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  cout<<"costed me "<<time<<" second in real time"<<endl;
+
+  norm =0.;
+
+  double max=0.;
+  // double second=0.;
+  int location;
+  // int location_second;
+  for (int i = 0; i < (int) pow(2,8); i++) {
+    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+    norm+=tmp;
+    if (tmp > max) {
+      // second = max;
+      max = tmp;
+      // location_second=location;
+      location = i;
+    }
+    // cout<<i<<"th real after ope "<<test.psi_real[i]<<endl;
+    // cout<<i<<"th imag after ope "<<test.psi_imaginary[i]<<endl;
+  }
+  cout<<"norm after run = "<<norm<<endl;
+  cout<<"max after run = "<<max<<endl;
+  cout<<"location after run = "<<location<<endl;
+  // cout<<"second max after run = "<<second<<endl;
+  // cout<<"location for second after run = "<<location_second<<endl;
+  // // test.test();
+  // double* J_array;
+  // J_array = new double [64];
+  // test.read(64,J_array,"J.txt");
+  // double* h_array;
+  // h_array = new double [8];
+  // test.read(8,h_array,"h.txt");
+  //
+  // cout<<"reutrn "<<0<<endl;
+  return 0;
 }
 
 
@@ -191,8 +194,10 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     H_imaginary[i]= 0.;
   }
 
-  read(N*N,J_z,"J2.txt");
-  read(N,h_z,"h2.txt");
+  read(N*N,J_z,"J1.txt");
+  read(N*N,J_x,"J2x.txt");
+  read(N*N,J_y,"J2y.txt");
+  read(N,h_z,"h1.txt");
 
   for (int i = 0; i < N*N; i++){
     // cout<<J_z[i]<<endl;
@@ -230,18 +235,9 @@ void spin_system::single_spin_op(double t){
     double norm=0;
     //set the initial transverse field
     double h_x_init=1.;
-    // if (!t_on) {
-    //   //without t dependent
-    //   norm=sqrt(h_x[k]*h_x[k]+h_y[k]*h_y[k]+h_z[k]*h_z[k]);
-    //   // cout<<"t_on = "<<t_on<<"off"<<endl;
-    // }
-    // else {
-      //with t dependent
-      Delta = t/T;
-      Gamma = 1-Delta;
-      norm=sqrt((Gamma*h_x_init+Delta*h_x[k])*(Gamma*h_x_init+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
-      // cout<<"h_z["<<k<<"] = "<<h_z[k]<<endl;
-    // }
+    Delta = t/T;
+    Gamma = 1-Delta;
+    norm=sqrt((Gamma*h_x_init+Delta*h_x[k])*(Gamma*h_x_init+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
 
 
     if (norm-0<1e-14) {
@@ -256,8 +252,6 @@ void spin_system::single_spin_op(double t){
     }
 
     else {
-      // cout<<"Delta outside = "<<Delta<<endl;
-      // cout<<"tau = "<<tau<<endl;
       ss_operator_real[0]      = cos(tau*0.5*norm);
       ss_operator_real[1]      = Delta*h_y[k]*sin(tau*0.5*norm)/norm;
       ss_operator_real[2]      = -1*Delta*h_y[k]*sin(tau*0.5*norm)/norm;
@@ -275,16 +269,10 @@ void spin_system::single_spin_op(double t){
       int i2= l & i1;
       int i = l -i2+i2/i1;
       int j = i+i1;
-      /*construct H matrix*/
-      H_real[i+i*(i+1)/2] += 0.5*Delta*-h_z[k];
-      H_real[j+j*(j+1)/2] += -0.5*Delta*-h_z[k];
-      H_real[i+j*(j+1)/2] += 0.5*Gamma*-h_x_init;
-
-      if (i>nofstates-1||j>nofstates-1) {
-        cout<<"i = "<<i<<",j= "<<j<<endl;
-      }
-
-
+      // /*construct H matrix*/
+      // H_real[i+i*(i+1)/2] += 0.5*Delta*-h_z[k];
+      // H_real[j+j*(j+1)/2] += -0.5*Delta*-h_z[k];
+      // H_real[i+j*(j+1)/2] += 0.5*Gamma*-h_x_init;
 
       /* operate the matrix to the spin.
       */
@@ -332,11 +320,6 @@ void spin_system::double_spin_op(double t){
       */
 
       double a=J_z[k+l*N]/1.;//4.;
-      // if (abs(J_z[k+l*N])>1e-8) {
-      //   cout<<"k ="<<k<<endl;
-      //   cout<<"l ="<<l<<endl;
-      //   cout<<"end"<<endl;
-      // }
       double b=(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
       double c=(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
@@ -376,15 +359,12 @@ void spin_system::double_spin_op(double t){
           n2=n0+njj;
           n3=n1+njj;
 
-          /*construct H matrix*/
-          H_real[n0+n0*(n0+1)/2] += 1.*Delta*-J_z[k+l*N];
-          H_real[n1+n1*(n1+1)/2] +=-1.*Delta*-J_z[k+l*N];
-          H_real[n2+n2*(n2+1)/2] +=-1.*Delta*-J_z[k+l*N];
-          H_real[n3+n3*(n3+1)/2] += 1.*Delta*-J_z[k+l*N];
+          // /*construct H matrix*/
+          // H_real[n0+n0*(n0+1)/2] += 1.*Delta*-J_z[k+l*N];
+          // H_real[n1+n1*(n1+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n2+n2*(n2+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n3+n3*(n3+1)/2] += 1.*Delta*-J_z[k+l*N];
 
-          // if(n0>nofstates-2 || n1>nofstates-2 || n2>nofstates-2 || n3>nofstates-2)
-            // cout<<"n0 = "<<n0<<",n1= "<<n1<<",n2= "<<n2<<",n3= "<<n3<<endl;
-          // cout<<"n0= "<<n0<<"n1= "<<n1<<"n2= "<<n2<<"n3= "<<n3<<endl;
 
           /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
@@ -432,6 +412,331 @@ void spin_system::double_spin_op(double t){
   }
 }
 
+
+/* 24.01.2017
+trying to decomposite double spin properly
+*/
+void spin_system::double_spin_op_x(double t){
+  Delta = t/T;
+  // cout<<t<<endl;
+  for (int k = 0; k <N ; k++) {
+    for (int l = k; l < N; l++) {
+      double J=J_x[k+l*N];
+      // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
+      if(abs(J)>1e-15){
+
+
+      /* update the double spin Hamiltonian matrix with t.
+        In principal, we can save some computing time here,
+        because of reading convenience I didn't do so.
+      */
+
+      double a=0;//J_z[k+l*N]/1.;//4.;
+      double b=J_x[k+l*N];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+      double c=J_x[k+l*N];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+
+
+
+
+      ds_operator_real[0]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_real[1]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[2]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_real[3]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[4]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[5]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_real[6]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[7]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_imaginary[0] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[2] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[5] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[7] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+
+      int nii=(int) pow(2,k);
+      int njj=(int) pow(2,l);
+
+        for (int m = 0; m < nofstates; m+=4) {
+          /* get index for the second place we need to operate ss_operator on.
+            this is a copy from the previous code.
+            need to be moderated more properly without divde operator.
+          */
+          int n3 = m & njj;
+          int n2 = m-n3+(n3+n3)/njj;
+          int n1 = n2 & nii;
+          int n0 = n2-n1+n1/nii;
+          n1=n0+nii;
+          n2=n0+njj;
+          n3=n1+njj;
+
+          // /*construct H matrix*/
+          // H_real[n0+n0*(n0+1)/2] += 1.*Delta*-J_z[k+l*N];
+          // H_real[n1+n1*(n1+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n2+n2*(n2+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n3+n3*(n3+1)/2] += 1.*Delta*-J_z[k+l*N];
+
+
+          /* Following the similar manner in single_spin_op,
+            I create several temperory variables to store values of psi
+          */
+          double psi_real_temp_n0      = 0;
+          double psi_imaginary_temp_n0 = 0;
+          double psi_real_temp_n1      = 0;
+          double psi_imaginary_temp_n1 = 0;
+          double psi_real_temp_n2      = 0;
+          double psi_imaginary_temp_n2 = 0;
+          double psi_real_temp_n3      = 0;
+          double psi_imaginary_temp_n3 = 0;
+
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
+                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
+          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
+                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
+                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
+          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
+                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+
+          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
+                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
+          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
+                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+
+          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
+                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
+          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
+                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+
+          psi_real[n0]      = psi_real_temp_n0;
+          psi_imaginary[n0] = psi_imaginary_temp_n0;
+          psi_real[n1]      = psi_real_temp_n1;
+          psi_imaginary[n1] = psi_imaginary_temp_n1;
+          psi_real[n2]      = psi_real_temp_n2;
+          psi_imaginary[n2] = psi_imaginary_temp_n2;
+          psi_real[n3]      = psi_real_temp_n3;
+          psi_imaginary[n3] = psi_imaginary_temp_n3;
+        }
+      }
+    }
+  }
+}
+void spin_system::double_spin_op_y(double t){
+  Delta = t/T;
+  // cout<<t<<endl;
+  for (int k = 0; k <N ; k++) {
+    for (int l = k; l < N; l++) {
+      double J=J_y[k+l*N];
+      // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
+      if(abs(J)>1e-15){
+
+
+      /* update the double spin Hamiltonian matrix with t.
+        In principal, we can save some computing time here,
+        because of reading convenience I didn't do so.
+      */
+
+      double a=0;//J_z[k+l*N]/1.;//4.;
+      double b=-J_y[k+l*N];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+      double c=J_y[k+l*N];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+
+
+
+
+      ds_operator_real[0]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_real[1]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[2]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_real[3]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[4]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[5]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_real[6]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[7]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_imaginary[0] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[2] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[5] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[7] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+
+      int nii=(int) pow(2,k);
+      int njj=(int) pow(2,l);
+
+        for (int m = 0; m < nofstates; m+=4) {
+          /* get index for the second place we need to operate ss_operator on.
+            this is a copy from the previous code.
+            need to be moderated more properly without divde operator.
+          */
+          int n3 = m & njj;
+          int n2 = m-n3+(n3+n3)/njj;
+          int n1 = n2 & nii;
+          int n0 = n2-n1+n1/nii;
+          n1=n0+nii;
+          n2=n0+njj;
+          n3=n1+njj;
+
+          // /*construct H matrix*/
+          // H_real[n0+n0*(n0+1)/2] += 1.*Delta*-J_z[k+l*N];
+          // H_real[n1+n1*(n1+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n2+n2*(n2+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n3+n3*(n3+1)/2] += 1.*Delta*-J_z[k+l*N];
+
+
+          /* Following the similar manner in single_spin_op,
+            I create several temperory variables to store values of psi
+          */
+          double psi_real_temp_n0      = 0;
+          double psi_imaginary_temp_n0 = 0;
+          double psi_real_temp_n1      = 0;
+          double psi_imaginary_temp_n1 = 0;
+          double psi_real_temp_n2      = 0;
+          double psi_imaginary_temp_n2 = 0;
+          double psi_real_temp_n3      = 0;
+          double psi_imaginary_temp_n3 = 0;
+
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
+                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
+          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
+                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
+                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
+          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
+                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+
+          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
+                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
+          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
+                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+
+          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
+                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
+          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
+                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+
+          psi_real[n0]      = psi_real_temp_n0;
+          psi_imaginary[n0] = psi_imaginary_temp_n0;
+          psi_real[n1]      = psi_real_temp_n1;
+          psi_imaginary[n1] = psi_imaginary_temp_n1;
+          psi_real[n2]      = psi_real_temp_n2;
+          psi_imaginary[n2] = psi_imaginary_temp_n2;
+          psi_real[n3]      = psi_real_temp_n3;
+          psi_imaginary[n3] = psi_imaginary_temp_n3;
+        }
+      }
+    }
+  }
+}
+void spin_system::double_spin_op_z(double t){
+  Delta = t/T;
+  // cout<<t<<endl;
+  for (int k = 0; k <N ; k++) {
+    for (int l = k; l < N; l++) {
+      double J=J_z[k+l*N];
+      // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
+      if(abs(J)>1e-15){
+
+
+      /* update the double spin Hamiltonian matrix with t.
+        In principal, we can save some computing time here,
+        because of reading convenience I didn't do so.
+      */
+
+      double a=J_z[k+l*N]/1.;//4.;
+      double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+      double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+
+
+
+
+      ds_operator_real[0]      = cos( a*Delta*tau)*cos(b*Delta*tau);
+      ds_operator_real[1]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[2]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
+      ds_operator_real[3]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[4]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[5]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
+      ds_operator_real[6]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[7]      = cos( a*Delta*tau)*cos(b*Delta*tau);
+      ds_operator_imaginary[0] = sin( a*Delta*tau)*cos(b*Delta*tau);
+      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[2] = sin(-a*Delta*tau)*cos(c*Delta*tau);
+      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_imaginary[5] = sin(-a*Delta*tau)*cos(c*Delta*tau);
+      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[7] = sin( a*Delta*tau)*cos(b*Delta*tau);
+
+      int nii=(int) pow(2,k);
+      int njj=(int) pow(2,l);
+
+        for (int m = 0; m < nofstates; m+=4) {
+          /* get index for the second place we need to operate ss_operator on.
+            this is a copy from the previous code.
+            need to be moderated more properly without divde operator.
+          */
+          int n3 = m & njj;
+          int n2 = m-n3+(n3+n3)/njj;
+          int n1 = n2 & nii;
+          int n0 = n2-n1+n1/nii;
+          n1=n0+nii;
+          n2=n0+njj;
+          n3=n1+njj;
+
+          // /*construct H matrix*/
+          // H_real[n0+n0*(n0+1)/2] += 1.*Delta*-J_z[k+l*N];
+          // H_real[n1+n1*(n1+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n2+n2*(n2+1)/2] +=-1.*Delta*-J_z[k+l*N];
+          // H_real[n3+n3*(n3+1)/2] += 1.*Delta*-J_z[k+l*N];
+
+
+          /* Following the similar manner in single_spin_op,
+            I create several temperory variables to store values of psi
+          */
+          double psi_real_temp_n0      = 0;
+          double psi_imaginary_temp_n0 = 0;
+          double psi_real_temp_n1      = 0;
+          double psi_imaginary_temp_n1 = 0;
+          double psi_real_temp_n2      = 0;
+          double psi_imaginary_temp_n2 = 0;
+          double psi_real_temp_n3      = 0;
+          double psi_imaginary_temp_n3 = 0;
+
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
+                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
+          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
+                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
+                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
+          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
+                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+
+          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
+                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
+          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
+                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+
+          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
+                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
+          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
+                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+
+          psi_real[n0]      = psi_real_temp_n0;
+          psi_imaginary[n0] = psi_imaginary_temp_n0;
+          psi_real[n1]      = psi_real_temp_n1;
+          psi_imaginary[n1] = psi_imaginary_temp_n1;
+          psi_real[n2]      = psi_real_temp_n2;
+          psi_imaginary[n2] = psi_imaginary_temp_n2;
+          psi_real[n3]      = psi_real_temp_n3;
+          psi_imaginary[n3] = psi_imaginary_temp_n3;
+        }
+      }
+    }
+  }
+}
 
 /* calculate energy w/o construct matrix
 */
@@ -538,8 +843,8 @@ void spin_system::read(int N, double* Array, char const * filename ){
   26.12.2076: time evolution part added.
 */
 void spin_system::run(){
-  ofstream out_data("gs_t_95e-2.dat");
-  ofstream E_out("energy_T1e3_t1e-1");
+  // ofstream out_data("gs_t_95e-2.dat");
+  // ofstream E_out("energy_pf_T1e0_t1e-2.dat");
   int total_steps=0;
   total_steps=(int) T/tau;
 
@@ -551,38 +856,43 @@ void spin_system::run(){
       H_imaginary[i]=0.;
     }
     single_spin_op(step*tau);
-    double_spin_op(step*tau);
+    double_spin_op_x(step*tau);
+    double_spin_op_y(step*tau);
+    double_spin_op_z(step*tau);
+    double_spin_op_y(step*tau);
+    double_spin_op_x(step*tau);
     single_spin_op(step*tau);
-    energy(step*tau);
+    // energy(step*tau);
     double gs=0.;
-/*calculate average energy */
-    double energy_Hmatrix=0.;
-    double check_img=0.;
-    double* tmp_real;
-    double* tmp_imaginary;
-    tmp_real = new double [nofstates];
-    tmp_imaginary = new double [nofstates];
-    for (int i = 0; i < nofstates; i++) {
-      tmp_real[i]=0.;
-      tmp_imaginary[i]=0.;
-    }
-    for (int i = 0; i < nofstates; i++) {
-      for (int j = 0; j < nofstates; j++) {
-        if(j<i){
-          tmp_real[i]+=H_real[j+i*(i+1)/2]*psi_real[j]- -1*H_imaginary[j+i*(i+1)/2]*psi_imaginary[j];
-          tmp_imaginary[i]+=H_real[j+i*(i+1)/2]*psi_imaginary[j]+ -1*H_imaginary[j+i*(i+1)/2]*psi_real[j];
-        } else {
-          tmp_real[i]+=H_real[i+j*(j+1)/2]*psi_real[j]-   H_imaginary[i+j*(j+1)/2]*psi_imaginary[j];
-          tmp_imaginary[i]+=H_real[i+j*(j+1)/2]*psi_imaginary[j]+  H_imaginary[i+j*(j+1)/2]*psi_real[j];
-        }
-      }
-    }
-
-    for (int i = 0; i < nofstates; i++) {
-      energy_Hmatrix += psi_real[i]*tmp_real[i] - -1*psi_imaginary[i]*tmp_imaginary[i];
-      check_img += -1* psi_imaginary[i]*tmp_real[i] + psi_real[i]*tmp_imaginary[i];
-    }
-    E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
+// /*calculate average energy */
+//     double energy_Hmatrix=0.;
+//     double check_img=0.;
+//     double* tmp_real;
+//     double* tmp_imaginary;
+//     tmp_real = new double [nofstates];
+//     tmp_imaginary = new double [nofstates];
+//     for (int i = 0; i < nofstates; i++) {
+//       tmp_real[i]=0.;
+//       tmp_imaginary[i]=0.;
+//     }
+//     for (int i = 0; i < nofstates; i++) {
+//       for (int j = 0; j < nofstates; j++) {
+//         if(j<i){
+//           tmp_real[i]+=H_real[j+i*(i+1)/2]*psi_real[j]- -1*H_imaginary[j+i*(i+1)/2]*psi_imaginary[j];
+//           tmp_imaginary[i]+=H_real[j+i*(i+1)/2]*psi_imaginary[j]+ -1*H_imaginary[j+i*(i+1)/2]*psi_real[j];
+//         } else {
+//           tmp_real[i]+=H_real[i+j*(j+1)/2]*psi_real[j]-   H_imaginary[i+j*(j+1)/2]*psi_imaginary[j];
+//           tmp_imaginary[i]+=H_real[i+j*(j+1)/2]*psi_imaginary[j]+  H_imaginary[i+j*(j+1)/2]*psi_real[j];
+//         }
+//       }
+//     }
+//
+//     for (int i = 0; i < nofstates; i++) {
+//       energy_Hmatrix += psi_real[i]*tmp_real[i] - -1*psi_imaginary[i]*tmp_imaginary[i];
+//       check_img += -1* psi_imaginary[i]*tmp_real[i] + psi_real[i]*tmp_imaginary[i];
+//     }
+//     E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
+    // E_out<<step*tau/T<<" "<<average_energy<<endl;
 
 
     gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
@@ -590,7 +900,7 @@ void spin_system::run(){
       // cout<<i<<"th real"<<test.psi_real[i]<<endl;
       // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
 
-    out_data<<step*tau/T<<" "<<gs<<endl;
+    // out_data<<step*tau/T<<" "<<gs<<endl;
     gs =0.;
 
 
