@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,1000.,0.01);
+  test.initialize(8,1000.,0.1);
 
   double norm=0.;
 
@@ -104,6 +104,16 @@ int main(int argc, char* argv[]){
   cout<<"norm after run = "<<norm<<endl;
   cout<<"max after run = "<<max<<endl;
   cout<<"location after run = "<<location<<endl;
+
+  ofstream PSI_out("Psi_out.dat");
+  for (int i = 0; i < (int) pow(2,8); i++) {
+    if(test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i]<1e-3){
+      PSI_out<<0<<endl;
+    } else {
+    // PSI_out<<"("<<test.psi_real[i]<<","<<test.psi_imaginary[i]<<")"<<endl;
+    PSI_out<<test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i]<<endl;
+    }
+  }
   // cout<<"second max after run = "<<second<<endl;
   // cout<<"location for second after run = "<<location_second<<endl;
   // // test.test();
@@ -194,13 +204,13 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     H_imaginary[i]= 0.;
   }
 
-  read(N*N,J_z,"J1.txt");
+  read(N*N,J_z,"J2.txt");
   read(N*N,J_x,"J2x.txt");
   read(N*N,J_y,"J2y.txt");
-  read(N,h_z,"h1.txt");
+  read(N,h_z,"h2.txt");
 
   for (int i = 0; i < N*N; i++){
-    // cout<<J_z[i]<<endl;
+    // cout<<J_x[i]<<endl;
   }
 
   for (int i = 0; i < N; i++){
@@ -308,7 +318,7 @@ void spin_system::double_spin_op(double t){
   Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
-    for (int l = k; l < N; l++) {
+    for (int l = k+1; l < N; l++) {
       double J=J_z[k+l*N];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       if(abs(J)>1e-15){
@@ -327,20 +337,17 @@ void spin_system::double_spin_op(double t){
 
 
       ds_operator_real[0]      = cos( a*Delta*tau)*cos(b*Delta*tau);
-      ds_operator_real[1]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[1]      = -sin( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_real[2]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_real[3]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
-      ds_operator_real[4]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[3]      = -sin(-a*Delta*tau)*sin(c*Delta*tau);
+      ds_operator_real[4]      = -sin(-a*Delta*tau)*sin(c*Delta*tau);
       ds_operator_real[5]      = cos(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_real[6]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_real[6]      = -sin( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_real[7]      = cos( a*Delta*tau)*cos(b*Delta*tau);
       ds_operator_imaginary[0] = sin( a*Delta*tau)*cos(b*Delta*tau);
-      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[1] = cos( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_imaginary[2] = sin(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
-      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
-      ds_operator_imaginary[5] = sin(-a*Delta*tau)*cos(c*Delta*tau);
-      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
+      ds_operator_imaginary[6] = cos( a*Delta*tau)*sin(b*Delta*tau);
       ds_operator_imaginary[7] = sin( a*Delta*tau)*cos(b*Delta*tau);
 
       int nii=(int) pow(2,k);
@@ -420,7 +427,7 @@ void spin_system::double_spin_op_x(double t){
   Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
-    for (int l = k; l < N; l++) {
+    for (int l = k+1; l < N; l++) {
       double J=J_x[k+l*N];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       if(abs(J)>1e-15){
@@ -439,20 +446,20 @@ void spin_system::double_spin_op_x(double t){
 
 
       ds_operator_real[0]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
-      ds_operator_real[1]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[1]      = -sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
       ds_operator_real[2]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-      ds_operator_real[3]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-      ds_operator_real[4]      =0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[3]      = -sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_real[4]      = -sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
       ds_operator_real[5]      = cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-      ds_operator_real[6]      =0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_real[6]      = -sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
       ds_operator_real[7]      = cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
       ds_operator_imaginary[0] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
-      ds_operator_imaginary[1] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[1] = cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
       ds_operator_imaginary[2] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-      ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-      ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[3] = cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+      ds_operator_imaginary[4] = cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
       ds_operator_imaginary[5] = sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-      ds_operator_imaginary[6] = 0;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+      ds_operator_imaginary[6] = cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
       ds_operator_imaginary[7] = sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
 
       int nii=(int) pow(2,k);
@@ -527,7 +534,7 @@ void spin_system::double_spin_op_y(double t){
   Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
-    for (int l = k; l < N; l++) {
+    for (int l = k+1; l < N; l++) {
       double J=J_y[k+l*N];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       if(abs(J)>1e-15){
@@ -634,7 +641,7 @@ void spin_system::double_spin_op_z(double t){
   Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
-    for (int l = k; l < N; l++) {
+    for (int l = k+1; l < N; l++) {
       double J=J_z[k+l*N];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       if(abs(J)>1e-15){
