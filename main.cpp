@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,1000.,0.1);
+  test.initialize(8,1000.,0.001);
 
   double norm=0.;
 
@@ -245,8 +245,8 @@ void spin_system::single_spin_op(double t){
     double norm=0;
     //set the initial transverse field
     double h_x_init=1.;
-    Delta = t/T;
-    Gamma = 1-Delta;
+    // Delta = t/T;
+    // Gamma = 1-Delta;
     norm=sqrt((Gamma*h_x_init+Delta*h_x[k])*(Gamma*h_x_init+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
 
 
@@ -315,7 +315,7 @@ void spin_system::single_spin_op(double t){
 /* to operate J*S.*S
 */
 void spin_system::double_spin_op(double t){
-  Delta = t/T;
+  // Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
@@ -424,7 +424,7 @@ void spin_system::double_spin_op(double t){
 trying to decomposite double spin properly
 */
 void spin_system::double_spin_op_x(double t){
-  Delta = t/T;
+  // Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
@@ -531,7 +531,7 @@ void spin_system::double_spin_op_x(double t){
   }
 }
 void spin_system::double_spin_op_y(double t){
-  Delta = t/T;
+  // Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
@@ -638,7 +638,7 @@ void spin_system::double_spin_op_y(double t){
   }
 }
 void spin_system::double_spin_op_z(double t){
-  Delta = t/T;
+  // Delta = t/T;
   // cout<<t<<endl;
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
@@ -755,8 +755,8 @@ void spin_system::energy(double t){
   average_energy=0.;
   double check_img=0.;
 
-  Delta = t/T;
-  Gamma = 1-Delta;
+  // Delta = t/T;
+  // Gamma = 1-Delta;
   double hx=-1.;
   for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
@@ -765,11 +765,12 @@ void spin_system::energy(double t){
       int i2= l & i1;
       int i = l -i2+i2/i1;
       int j = i+i1;
+      /*sigma_x*/
       psi_tmp_real[i]     += Gamma*hx*psi_real[j];
       psi_tmp_imaginary[i]+= Gamma*hx*psi_imaginary[j];
       psi_tmp_real[j]     += Gamma*hx*psi_real[i];
       psi_tmp_imaginary[j]+= Gamma*hx*psi_imaginary[i];
-
+      /*sigma_z*/
       psi_tmp_real[i]     += Delta*hz*psi_real[i];
       psi_tmp_imaginary[i]+= Delta*hz*psi_imaginary[i];
       psi_tmp_real[j]     += -Delta*hz*psi_real[j];
@@ -779,9 +780,11 @@ void spin_system::energy(double t){
   }
 
   for (int k = 0; k <N ; k++) {
-    for (int l = k; l < N; l++) {
-      double J=-J_z[k+l*N];
-      if(abs(J)>1e-15){
+    for (int l = k+1; l < N; l++) {
+      double Jx=-J_x[k+l*N];
+      double Jy=-J_y[k+l*N];
+      double Jz=-J_z[k+l*N];
+      if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
         for (int m = 0; m < nofstates; m+=4) {
@@ -792,20 +795,41 @@ void spin_system::energy(double t){
           n1=n0+nii;
           n2=n0+njj;
           n3=n1+njj;
-          psi_tmp_real[n0]      += Delta*J*psi_real[n0];
-          psi_tmp_imaginary[n0] += Delta*J*psi_imaginary[n0];
-          psi_tmp_real[n1]      += -Delta*J*psi_real[n1];
-          psi_tmp_imaginary[n1] += -Delta*J*psi_imaginary[n1];
-          psi_tmp_real[n2]      += -Delta*J*psi_real[n2];
-          psi_tmp_imaginary[n2] += -Delta*J*psi_imaginary[n2];
-          psi_tmp_real[n3]      += Delta*J*psi_real[n3];
-          psi_tmp_imaginary[n3] += Delta*J*psi_imaginary[n3];
+          /*sigma_x*sigma_x*/
+          psi_tmp_real[n0]      += Delta*Jx*psi_real[n3];
+          psi_tmp_imaginary[n0] += Delta*Jx*psi_imaginary[n3];
+          psi_tmp_real[n1]      += Delta*Jx*psi_real[n2];
+          psi_tmp_imaginary[n1] += Delta*Jx*psi_imaginary[n2];
+          psi_tmp_real[n2]      += Delta*Jx*psi_real[n1];
+          psi_tmp_imaginary[n2] += Delta*Jx*psi_imaginary[n1];
+          psi_tmp_real[n3]      += Delta*Jx*psi_real[n0];
+          psi_tmp_imaginary[n3] += Delta*Jx*psi_imaginary[n0];
+          /*sigma_y*sigma_y*/
+          psi_tmp_real[n0]      += -Delta*Jy*psi_real[n3];
+          psi_tmp_imaginary[n0] += -Delta*Jy*psi_imaginary[n3];
+          psi_tmp_real[n1]      += Delta*Jy*psi_real[n2];
+          psi_tmp_imaginary[n1] += Delta*Jy*psi_imaginary[n2];
+          psi_tmp_real[n2]      += Delta*Jy*psi_real[n1];
+          psi_tmp_imaginary[n2] += Delta*Jy*psi_imaginary[n1];
+          psi_tmp_real[n3]      += -Delta*Jy*psi_real[n0];
+          psi_tmp_imaginary[n3] += -Delta*Jy*psi_imaginary[n0];
+          /*sigma_z*sigma_z*/
+          psi_tmp_real[n0]      += Delta*Jz*psi_real[n0];
+          psi_tmp_imaginary[n0] += Delta*Jz*psi_imaginary[n0];
+          psi_tmp_real[n1]      += -Delta*Jz*psi_real[n1];
+          psi_tmp_imaginary[n1] += -Delta*Jz*psi_imaginary[n1];
+          psi_tmp_real[n2]      += -Delta*Jz*psi_real[n2];
+          psi_tmp_imaginary[n2] += -Delta*Jz*psi_imaginary[n2];
+          psi_tmp_real[n3]      += Delta*Jz*psi_real[n3];
+          psi_tmp_imaginary[n3] += Delta*Jz*psi_imaginary[n3];
+
 
         }
       }
     }
   }
-  for (int i = 0; i < nofstates; i++) {
+  for (int i = 0; i < nofstates; ++i) {
+    // cout<<2++1*3<<endl;
     average_energy += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
     check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
   }
@@ -851,7 +875,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
 */
 void spin_system::run(){
   // ofstream out_data("gs_t_95e-2.dat");
-  // ofstream E_out("energy_pf_T1e0_t1e-2.dat");
+  ofstream E_out("energy_xyz_decomp.dat");
   int total_steps=0;
   total_steps=(int) T/tau;
 
@@ -862,6 +886,8 @@ void spin_system::run(){
       H_real[i]=0.;
       H_imaginary[i]=0.;
     }
+    Delta=1.;//step*tau/T;
+    Gamma=1.;//1-Delta;
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
@@ -869,7 +895,7 @@ void spin_system::run(){
     double_spin_op_y(step*tau);
     double_spin_op_x(step*tau);
     single_spin_op(step*tau);
-    // energy(step*tau);
+    energy(step*tau);
     double gs=0.;
 // /*calculate average energy */
 //     double energy_Hmatrix=0.;
@@ -899,7 +925,7 @@ void spin_system::run(){
 //       check_img += -1* psi_imaginary[i]*tmp_real[i] + psi_real[i]*tmp_imaginary[i];
 //     }
 //     E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
-    // E_out<<step*tau/T<<" "<<average_energy<<endl;
+    E_out<<step*tau/T<<" "<<average_energy<<endl;
 
 
     gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
