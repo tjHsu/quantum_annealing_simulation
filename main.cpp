@@ -61,9 +61,11 @@ public:
 
 int main(int argc, char* argv[]){
 
+
+
   spin_system test;
 
-  test.initialize(8,1000.,0.01);
+  test.initialize(8,10.,0.0001);
 
   double norm=0.;
 
@@ -134,11 +136,29 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
 
   /* initialize the wave function in the ground state
   */
+  srand (time(NULL));
+  // for (int i = 0; i < 50; i++) {
+  //   cout<<(double)rand()/RAND_MAX<<endl;
+  // }
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
+  double normalize_factor=0.;
   for (int i = 0; i < nofstates; i++) {
-    psi_real[i]      = pow(nofstates, -0.5);
-    psi_imaginary[i] = 0;
+    if(i%2==0){
+      psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+      psi_imaginary[i] = (double) rand()/RAND_MAX;
+      normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+    } else {
+      psi_real[i]      = 0;
+      psi_imaginary[i] = 0;
+    }
+  }
+  normalize_factor = sqrt(normalize_factor);
+  for (int i = 0; i < nofstates; i++) {
+    if(i%2==0){
+      psi_real[i]      =psi_real[i]/normalize_factor;
+      psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
+    }
   }
 
   psi_tmp_real = new double [nofstates];
@@ -844,7 +864,7 @@ void spin_system::spin(char d){
   // Gamma = 1-Delta;
   double hx=-1.;
   for (int k = 0; k < N; k++) {
-    if (k==3) {
+    if (k==0) {
       int i1=(int) pow(2,k);
       for (int l = 0; l < nofstates; l+=2) {
         int i2= l & i1;
@@ -981,7 +1001,7 @@ void spin_system::run(){
 //       check_img += -1* psi_imaginary[i]*tmp_real[i] + psi_real[i]*tmp_imaginary[i];
 //     }
 //     E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
-    E_out<<step*tau/T<<" "<<average_spin_x<<endl;
+    E_out<<step*tau<<" "<<average_spin_x<<endl;
 
 
     gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
