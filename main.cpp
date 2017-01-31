@@ -40,6 +40,7 @@ public:
   void double_spin_op_x(double);
   void double_spin_op_y(double);
   void double_spin_op_z(double);
+  void generate_initial_state(char);
   void energy(double);
   void spin(char);
   void run();
@@ -56,24 +57,13 @@ public:
 
 };
 
-/* Some Notes for myself: */
-/* Don't use class complex<double>. It is terribly slow */
-
 int main(int argc, char* argv[]){
 
-
-
   spin_system test;
-
   test.initialize(8,10.,0.01);
-
   double norm=0.;
-
   for (int i = 0; i < (int) pow(2,8); i++) {
     norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-
-    // cout<<i<<"th real"<<test.psi_real[i]<<endl;
-    // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
   }
   cout<<"norm before run = "<<norm<<endl;
   time_t start=time(0);
@@ -136,38 +126,12 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
 
   /* initialize the wave function in the ground state
   */
-  srand (time(NULL));
-  // for (int i = 0; i < 50; i++) {
-  //   cout<<(double)rand()/RAND_MAX<<endl;
-  // }
+
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
-  read(nofstates,psi_real,"psi_real.dat");
-  read(nofstates,psi_imaginary,"psi_imagine.dat");
+  generate_initial_state('r');
 
 
-  // double normalize_factor=0.;
-  // for (int i = 0; i < nofstates; i++) {
-  //   if(i%2==0){
-  //     psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
-  //     psi_imaginary[i] = (double) rand()/RAND_MAX;
-  //     normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
-  //   } else {
-  //     psi_real[i]      = 0;
-  //     psi_imaginary[i] = 0;
-  //   }
-  // }
-  // ofstream Psi_r_out("psi_real.dat");
-  // ofstream Psi_i_out("psi_imagine.dat");
-  // normalize_factor = sqrt(normalize_factor);
-  // for (int i = 0; i < nofstates; i++) {
-  //   if(i%2==0){
-  //     psi_real[i]      =psi_real[i]/normalize_factor;
-  //     psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
-  //   }
-  //   Psi_r_out<<psi_real[i]<<endl;
-  //   Psi_i_out<<psi_imaginary[i]<<endl;
-  // }
 
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
@@ -250,7 +214,47 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
 
 }
 
+void spin_system::generate_initial_state(char d){
 
+
+  if ('r'==d){
+    read(nofstates,psi_real,"psi_real.dat");
+    read(nofstates,psi_imaginary,"psi_imagine.dat");
+  }
+
+  else if ('f'==d){
+    srand (time(NULL));
+    double normalize_factor=0.;
+    for (int i = 0; i < nofstates; i++) {
+      if(i%2==0){
+        psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+        psi_imaginary[i] = (double) rand()/RAND_MAX;
+        normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+      } else {
+        psi_real[i]      = 0;
+        psi_imaginary[i] = 0;
+      }
+    }
+    ofstream Psi_r_out("psi_real.dat");
+    ofstream Psi_i_out("psi_imagine.dat");
+    normalize_factor = sqrt(normalize_factor);
+    for (int i = 0; i < nofstates; i++) {
+      if(i%2==0){
+        psi_real[i]      =psi_real[i]/normalize_factor;
+        psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
+      }
+      Psi_r_out<<psi_real[i]<<endl;
+      Psi_i_out<<psi_imaginary[i]<<endl;
+    }
+
+  }
+  else {
+    cout<<endl<<"Wrong Parameter for function: generate_initial_state(char)"<<endl;
+    cout<<"!!!BE AWARE of the correctness of the result!!!"<<endl<<endl;
+
+  }
+
+}
 /* to operate sigma_x,_y,_z*h
 */
 void spin_system::single_spin_op(double t){
@@ -956,7 +960,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
 */
 void spin_system::run(){
   // ofstream out_data("gs_t_95e-2.dat");
-  ofstream E_out("../Full_diag/spin_x_pd.dat");
+  ofstream E_out("spin_x_pd.dat");
   int total_steps=0;
   total_steps=(int) T/tau;
 
