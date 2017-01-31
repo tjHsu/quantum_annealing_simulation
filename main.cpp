@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,10.,0.0001);
+  test.initialize(8,10.,0.01);
 
   double norm=0.;
 
@@ -142,24 +142,32 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
   // }
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
-  double normalize_factor=0.;
-  for (int i = 0; i < nofstates; i++) {
-    if(i%2==0){
-      psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
-      psi_imaginary[i] = (double) rand()/RAND_MAX;
-      normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
-    } else {
-      psi_real[i]      = 0;
-      psi_imaginary[i] = 0;
-    }
-  }
-  normalize_factor = sqrt(normalize_factor);
-  for (int i = 0; i < nofstates; i++) {
-    if(i%2==0){
-      psi_real[i]      =psi_real[i]/normalize_factor;
-      psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
-    }
-  }
+  read(nofstates,psi_real,"psi_real.dat");
+  read(nofstates,psi_imaginary,"psi_imagine.dat");
+
+
+  // double normalize_factor=0.;
+  // for (int i = 0; i < nofstates; i++) {
+  //   if(i%2==0){
+  //     psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+  //     psi_imaginary[i] = (double) rand()/RAND_MAX;
+  //     normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+  //   } else {
+  //     psi_real[i]      = 0;
+  //     psi_imaginary[i] = 0;
+  //   }
+  // }
+  // ofstream Psi_r_out("psi_real.dat");
+  // ofstream Psi_i_out("psi_imagine.dat");
+  // normalize_factor = sqrt(normalize_factor);
+  // for (int i = 0; i < nofstates; i++) {
+  //   if(i%2==0){
+  //     psi_real[i]      =psi_real[i]/normalize_factor;
+  //     psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
+  //   }
+  //   Psi_r_out<<psi_real[i]<<endl;
+  //   Psi_i_out<<psi_imaginary[i]<<endl;
+  // }
 
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
@@ -948,7 +956,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
 */
 void spin_system::run(){
   // ofstream out_data("gs_t_95e-2.dat");
-  ofstream E_out("spin_x_pd.dat");
+  ofstream E_out("../Full_diag/spin_x_pd.dat");
   int total_steps=0;
   total_steps=(int) T/tau;
 
@@ -959,9 +967,9 @@ void spin_system::run(){
       H_real[i]=0.;
       H_imaginary[i]=0.;
     }
-    Delta=step*tau/T;
-    Gamma=1-Delta;
-    spin('z');
+    Delta=1;//step*tau/T;
+    Gamma=1;//1-Delta;
+    spin('y');
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
