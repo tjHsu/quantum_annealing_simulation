@@ -10,6 +10,8 @@
 #include <sstream>
 #include <time.h>
 //GIT TEST// //TTest from master//
+//GIT TEST//
+//Git Refine//
 
 using namespace std;
 class spin_system {
