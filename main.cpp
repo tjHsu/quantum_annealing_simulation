@@ -13,6 +13,7 @@
 //GIT TEST//
 //Git Refine//
 //TT last//
+//After receive//
 
 using namespace std;
 class spin_system {
