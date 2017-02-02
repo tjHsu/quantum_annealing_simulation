@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <time.h>
-//GIT TEST//
+//GIT TEST// //TTest from master//
 
 using namespace std;
 class spin_system {
