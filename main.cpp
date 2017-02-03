@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,100.,0.01);
+  test.initialize(8,1000.,0.01);
 
 
   double norm=0.;
@@ -166,7 +166,7 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
   //   Psi_r_out<<psi_real[i]<<endl;
   //   Psi_i_out<<psi_imaginary[i]<<endl;
   // }
-  generate_initial_state('r');
+  // generate_initial_state('r');
 
 
 
