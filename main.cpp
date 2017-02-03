@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,10.,0.01);
+  test.initialize(8,100.,0.01);
 
   double norm=0.;
 
@@ -142,10 +142,13 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
   // }
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
-  read(nofstates,psi_real,"psi_real.dat");
-  read(nofstates,psi_imaginary,"psi_imagine.dat");
+  // read(nofstates,psi_real,"psi_real.dat");
+  // read(nofstates,psi_imaginary,"psi_imagine.dat");
 
-
+  for (int i = 0; i < nofstates; i++) {
+      psi_real[i]      = pow(nofstates, -0.5);
+      psi_imaginary[i] = 0;
+  }
   // double normalize_factor=0.;
   // for (int i = 0; i < nofstates; i++) {
   //   if(i%2==0){
@@ -870,7 +873,6 @@ void spin_system::spin(char d){
 
   // Delta = t/T;
   // Gamma = 1-Delta;
-  double hx=-1.;
   for (int k = 0; k < N; k++) {
     if (k==0) {
       int i1=(int) pow(2,k);
@@ -955,8 +957,8 @@ void spin_system::read(int N, double* Array, char const * filename ){
   26.12.2076: time evolution part added.
 */
 void spin_system::run(){
-  // ofstream out_data("gs_t_95e-2.dat");
-  ofstream E_out("../Full_diag/spin_x_pd.dat");
+  ofstream out_data("../Result/product_formula/gs_T_1e100_t_1e-1.dat");
+  ofstream E_out("../Result/Verify/spin_x4_pd.dat");
   int total_steps=0;
   total_steps=(int) T/tau;
 
@@ -969,7 +971,7 @@ void spin_system::run(){
     }
     Delta=1;//step*tau/T;
     Gamma=1;//1-Delta;
-    spin('y');
+    spin('x');
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
@@ -978,7 +980,7 @@ void spin_system::run(){
     double_spin_op_x(step*tau);
     single_spin_op(step*tau);
 
-    energy(step*tau);
+    // energy(step*tau);
 
     double gs=0.;
 // /*calculate average energy */
@@ -1017,7 +1019,7 @@ void spin_system::run(){
       // cout<<i<<"th real"<<test.psi_real[i]<<endl;
       // cout<<i<<"th imag"<<test.psi_imaginary[i]<<endl;
 
-    // out_data<<step*tau/T<<" "<<gs<<endl;
+    out_data<<step*tau/T<<" "<<gs<<endl;
     gs =0.;
 
 
