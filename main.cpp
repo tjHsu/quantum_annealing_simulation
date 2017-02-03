@@ -33,6 +33,16 @@ private:
   double Gamma;
   double Delta;
 
+//optimize test
+  double* Jz_k_marked;
+  double* Jz_l_marked;
+  int count_z;
+  double* Jy_k_marked;
+  double* Jy_l_marked;
+  int count_y;
+  double* Jx_k_marked;
+  double* Jx_l_marked;
+  int count_x;
 
 public:
   void initialize(int ,double ,double);
@@ -128,18 +138,11 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
 
   psi_real = new double [nofstates];
   psi_imaginary = new double [nofstates];
-
-
   for (int i = 0; i < nofstates; i++) {
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-
-
   generate_initial_state("allx");
-
-
-
 
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
@@ -203,11 +206,20 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
   read(N,h_z,"h2.txt");
 
 
-  Gamma=1; //time evolution of the initial Hamiltonian. Goes from 1 to 0
+  Gamma=0; //time evolution of the initial Hamiltonian. Goes from 1 to 0
   Delta=0; //time evolution of the desired Hamiltonian. Goes from 0 to 1
 
 }
 
+
+/*
+  Set up the initial basis state
+  Input:
+    d: define which mode to set up
+      "read": read "psi_real.dat" and "psi_imagine_dat"
+      "1upRan": set spin_0 as up and others are random.
+      "allx": as the ground state of sigma_x.
+*/
 void spin_system::generate_initial_state(char const * d){
 
 
@@ -255,7 +267,10 @@ void spin_system::generate_initial_state(char const * d){
   }
 
 }
-/* to operate sigma_x,_y,_z*h
+/*
+  to operate sigma_x,_y,_z*h
+  Input:
+    t: current time
 */
 void spin_system::single_spin_op(double t){
 
@@ -339,10 +354,14 @@ void spin_system::single_spin_op(double t){
 */
 void spin_system::double_spin_op_x(double t){
 
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+  // for (int k = 0; k <N ; k++) {
+  //   for (int l = k+1; l < N; l++) {
+  for (int i = 0; i < count_x; i++) {
+
+    int k=Jx_k_marked[i];
+    int l=Jx_l_marked[i];
       double J=J_x[k+l*N];
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -434,20 +453,22 @@ void spin_system::double_spin_op_x(double t){
         }
       }
     }
-  }
-}
+  // }
+// }
 /*
   To operate sigma_y*sigma_y
   Input:
     t: the current time point
 */
-
 void spin_system::double_spin_op_y(double t){
 
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+  // for (int k = 0; k <N ; k++) {
+  //   for (int l = k+1; l < N; l++) {
+  for (int i = 0; i < count_y; i++) {
+    int k=Jy_k_marked[i];
+    int l=Jy_l_marked[i];
       double J=J_y[k+l*N];
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -539,22 +560,25 @@ void spin_system::double_spin_op_y(double t){
         }
       }
     }
-  }
-}
+  // }
+// }
 /*
   To operate sigma_z*sigma_z
   Input:
     t: the current time point
 */
-
 void spin_system::double_spin_op_z(double t){
-  // Delta = t/T;
-  // cout<<t<<endl;
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+
+  // for (int k = 0; k <N ; k++) {
+    // for (int l = k+1; l < N; l++) {
+
+  for (int i = 0; i < count_z; i++) {
+
+    int k=Jz_k_marked[i];
+    int l=Jz_l_marked[i];
       double J=J_z[k+l*N];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
 
         /* update the double spin Hamiltonian matrix with t.
@@ -645,8 +669,8 @@ void spin_system::double_spin_op_z(double t){
         }
       }
     }
-  }
-}
+  // }
+// }
 
 /*
   calculate energy w/o construct matrix
@@ -853,6 +877,45 @@ void spin_system::run(){
   int total_steps=0;
   total_steps=(int) T/tau;
 
+  /////test not go over whole J again and again/////
+  //////////////////////////////////////////////////
+
+  count_z=0;
+  count_y=0;
+  count_x=0;
+  Jz_k_marked=new double [N*(N+1)/2];
+  Jz_l_marked=new double [N*(N+1)/2];
+  Jy_k_marked=new double [N*(N+1)/2];
+  Jy_l_marked=new double [N*(N+1)/2];
+  Jx_k_marked=new double [N*(N+1)/2];
+  Jx_l_marked=new double [N*(N+1)/2];
+  for (int k = 0; k <N ; k++) {
+    for (int l = k+1; l < N; l++) {
+      if (abs(J_z[k+l*N])>1e-15){
+        Jz_k_marked[count_z]=k;
+        Jz_l_marked[count_z]=l;
+        count_z+=1;
+      }
+      if (abs(J_y[k+l*N])>1e-15){
+        Jy_k_marked[count_y]=k;
+        Jy_l_marked[count_y]=l;
+        count_y+=1;
+      }
+      if (abs(J_x[k+l*N])>1e-15){
+        Jx_k_marked[count_x]=k;
+        Jx_l_marked[count_x]=l;
+        count_x+=1;
+      }
+    }
+  }
+
+  cout<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
+  //////////////////////////////////////////////////
+  //////////////////////////////////////////////////
+
+
+
+
   for (int step = 0; step < total_steps+1; step++){
     for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
       H_real[i]=0.;
@@ -860,6 +923,9 @@ void spin_system::run(){
     }
     Delta=step*tau/T;
     Gamma=1-Delta;
+
+
+
     spin('x',0);
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
