@@ -945,8 +945,8 @@ void spin_system::run(){
       H_real[i]=0.;
       H_imaginary[i]=0.;
     }
-    Delta=1;//step*tau/T;
-    Gamma=1;//1-Delta;
+    Delta=step*tau/T;
+    Gamma=1-Delta;
     spin('x',0);
     single_spin_op(step*tau);
     // double_spin_op_x(step*tau);
