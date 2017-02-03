@@ -375,23 +375,26 @@ void spin_system::double_spin_op_x(double t){
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
 
+        double cos_b_block=cos(b_block);
+        double cos_c_block=cos(c_block);
+        double sin_b_block=sin(b_block);
+        double sin_c_block=sin(c_block);
 
-
-        ds_operator_real[0]      = cos(b_block);//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+        ds_operator_real[0]      = cos_b_block;//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
         ds_operator_real[1]      = 0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
-        ds_operator_real[2]      = cos(c_block);//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+        ds_operator_real[2]      = cos_c_block;//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
         ds_operator_real[3]      = 0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
         ds_operator_real[4]      = 0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-        ds_operator_real[5]      = cos(c_block);//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+        ds_operator_real[5]      = cos_c_block;//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
         ds_operator_real[6]      = 0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
-        ds_operator_real[7]      = cos(b_block);//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+        ds_operator_real[7]      = cos_b_block;//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
         ds_operator_imaginary[0] = 0;//sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
-        ds_operator_imaginary[1] = sin(b_block);//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+        ds_operator_imaginary[1] = sin_b_block;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
         ds_operator_imaginary[2] = 0;//sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-        ds_operator_imaginary[3] = sin(c_block);//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-        ds_operator_imaginary[4] = sin(c_block);//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+        ds_operator_imaginary[3] = sin_c_block;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+        ds_operator_imaginary[4] = sin_c_block;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
         ds_operator_imaginary[5] = 0;//sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-        ds_operator_imaginary[6] = sin(b_block);//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+        ds_operator_imaginary[6] = sin_b_block;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
         ds_operator_imaginary[7] = 0;//sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
 
         int nii=(int) pow(2,k);
@@ -422,25 +425,25 @@ void spin_system::double_spin_op_x(double t){
           double psi_real_temp_n3      = 0;
           double psi_imaginary_temp_n3 = 0;
 
-          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
-                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
-          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
-                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] /*+ ds_operator_real[1]*psi_real[n3]*/
+                                  /*-ds_operator_imaginary[0]*psi_imaginary[n0]*/ - ds_operator_imaginary[1]*psi_imaginary[n3];
+          psi_imaginary_temp_n0 = /*ds_operator_imaginary[0]*psi_real[n0] +*/ ds_operator_imaginary[1]*psi_real[n3]
+                                  +ds_operator_real[0]*psi_imaginary[n0] /*+ ds_operator_real[1]*psi_imaginary[n3]*/;
 
-          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
-                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
-          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
-                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] /*+ ds_operator_real[3]*psi_real[n2]*/
+                                  /*-ds_operator_imaginary[2]*psi_imaginary[n1]*/ - ds_operator_imaginary[3]*psi_imaginary[n2];
+          psi_imaginary_temp_n1 = /*ds_operator_imaginary[2]*psi_real[n1] +*/ ds_operator_imaginary[3]*psi_real[n2]
+                                  +ds_operator_real[2]*psi_imaginary[n1] /*+ ds_operator_real[3]*psi_imaginary[n2]*/;
 
-          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
-                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
-          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
-                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+          psi_real_temp_n2      = /*ds_operator_real[4]*psi_real[n1] + */ds_operator_real[5]*psi_real[n2]
+                                  -ds_operator_imaginary[4]*psi_imaginary[n1] /*- ds_operator_imaginary[5]*psi_imaginary[n2]*/;
+          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] /*+ ds_operator_imaginary[5]*psi_real[n2]*/
+                                  /*+ds_operator_real[4]*psi_imaginary[n1] */+ ds_operator_real[5]*psi_imaginary[n2];
 
-          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
-                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
-          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
-                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+          psi_real_temp_n3      = /*ds_operator_real[6]*psi_real[n0] +*/ ds_operator_real[7]*psi_real[n3]
+                                  -ds_operator_imaginary[6]*psi_imaginary[n0] /*- ds_operator_imaginary[7]*psi_imaginary[n3]*/;
+          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] /*+ ds_operator_imaginary[7]*psi_real[n3]*/
+                                  /*+ds_operator_real[6]*psi_imaginary[n0]*/ + ds_operator_real[7]*psi_imaginary[n3];
 
           psi_real[n0]      = psi_real_temp_n0;
           psi_imaginary[n0] = psi_imaginary_temp_n0;
@@ -482,23 +485,28 @@ void spin_system::double_spin_op_y(double t){
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
 
+        double cos_b_block=cos(b_block);
+        double cos_c_block=cos(c_block);
+        double sin_b_block=sin(b_block);
+        double sin_c_block=sin(c_block);
 
 
-        ds_operator_real[0]      = cos(b_block);//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+
+        ds_operator_real[0]      = cos_b_block;//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
         ds_operator_real[1]      = 0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
-        ds_operator_real[2]      = cos(c_block);//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+        ds_operator_real[2]      = cos_c_block;//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
         ds_operator_real[3]      = 0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
         ds_operator_real[4]      = 0;//-sin(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-        ds_operator_real[5]      = cos(c_block);//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
+        ds_operator_real[5]      = cos_c_block;//cos(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
         ds_operator_real[6]      = 0;//-sin( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
-        ds_operator_real[7]      = cos(b_block);//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
+        ds_operator_real[7]      = cos_b_block;//cos( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
         ds_operator_imaginary[0] = 0;//sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
-        ds_operator_imaginary[1] = sin(b_block);//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+        ds_operator_imaginary[1] = sin_b_block;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
         ds_operator_imaginary[2] = 0;//sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-        ds_operator_imaginary[3] = sin(c_block);//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
-        ds_operator_imaginary[4] = sin(c_block);//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+        ds_operator_imaginary[3] = sin_c_block;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
+        ds_operator_imaginary[4] = sin_c_block;//cos(-a*Delta*tau*0.5)*sin(c*Delta*tau*0.5);
         ds_operator_imaginary[5] = 0;//sin(-a*Delta*tau*0.5)*cos(c*Delta*tau*0.5);
-        ds_operator_imaginary[6] = sin(b_block);//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
+        ds_operator_imaginary[6] = sin_b_block;//cos( a*Delta*tau*0.5)*sin(b*Delta*tau*0.5);
         ds_operator_imaginary[7] = 0;//sin( a*Delta*tau*0.5)*cos(b*Delta*tau*0.5);
 
         int nii=(int) pow(2,k);
@@ -529,25 +537,25 @@ void spin_system::double_spin_op_y(double t){
           double psi_real_temp_n3      = 0;
           double psi_imaginary_temp_n3 = 0;
 
-          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
-                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
-          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
-                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] /*+ ds_operator_real[1]*psi_real[n3]*/
+                                  /*-ds_operator_imaginary[0]*psi_imaginary[n0]*/ - ds_operator_imaginary[1]*psi_imaginary[n3];
+          psi_imaginary_temp_n0 = /*ds_operator_imaginary[0]*psi_real[n0] +*/ ds_operator_imaginary[1]*psi_real[n3]
+                                  +ds_operator_real[0]*psi_imaginary[n0] /*+ ds_operator_real[1]*psi_imaginary[n3]*/;
 
-          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
-                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
-          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
-                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] /*+ ds_operator_real[3]*psi_real[n2]*/
+                                  /*-ds_operator_imaginary[2]*psi_imaginary[n1]*/ - ds_operator_imaginary[3]*psi_imaginary[n2];
+          psi_imaginary_temp_n1 = /*ds_operator_imaginary[2]*psi_real[n1] +*/ ds_operator_imaginary[3]*psi_real[n2]
+                                  +ds_operator_real[2]*psi_imaginary[n1] /*+ ds_operator_real[3]*psi_imaginary[n2]*/;
 
-          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
-                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
-          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
-                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+          psi_real_temp_n2      = /*ds_operator_real[4]*psi_real[n1] + */ds_operator_real[5]*psi_real[n2]
+                                  -ds_operator_imaginary[4]*psi_imaginary[n1] /*- ds_operator_imaginary[5]*psi_imaginary[n2]*/;
+          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] /*+ ds_operator_imaginary[5]*psi_real[n2]*/
+                                  /*+ds_operator_real[4]*psi_imaginary[n1] */+ ds_operator_real[5]*psi_imaginary[n2];
 
-          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
-                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
-          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
-                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+          psi_real_temp_n3      = /*ds_operator_real[6]*psi_real[n0] +*/ ds_operator_real[7]*psi_real[n3]
+                                  -ds_operator_imaginary[6]*psi_imaginary[n0] /*- ds_operator_imaginary[7]*psi_imaginary[n3]*/;
+          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] /*+ ds_operator_imaginary[7]*psi_real[n3]*/
+                                  /*+ds_operator_real[6]*psi_imaginary[n0]*/ + ds_operator_real[7]*psi_imaginary[n3];
 
           psi_real[n0]      = psi_real_temp_n0;
           psi_imaginary[n0] = psi_imaginary_temp_n0;
@@ -590,25 +598,25 @@ void spin_system::double_spin_op_z(double t){
         double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
-
-
-
-        ds_operator_real[0]      = cos( a*Delta*tau);//cos( a*Delta*tau)*cos(b*Delta*tau);
+        double a_block=a*Delta*tau;
+        double cos_a_block=cos(a_block);
+        double sin_a_block=sin(a_block);
+        ds_operator_real[0]      = cos_a_block;//cos( a*Delta*tau)*cos(b*Delta*tau);
         ds_operator_real[1]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
-        ds_operator_real[2]      = cos(-a*Delta*tau);//cos(-a*Delta*tau)*cos(c*Delta*tau);
+        ds_operator_real[2]      = cos_a_block;//cos(-a*Delta*tau)*cos(c*Delta*tau);
         ds_operator_real[3]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
         ds_operator_real[4]      =0;//-sin(-a*Delta*tau)*sin(c*Delta*tau);
-        ds_operator_real[5]      = cos(-a*Delta*tau);//cos(-a*Delta*tau)*cos(c*Delta*tau);
+        ds_operator_real[5]      = cos_a_block;//cos(-a*Delta*tau)*cos(c*Delta*tau);
         ds_operator_real[6]      =0;//-sin( a*Delta*tau)*sin(b*Delta*tau);
-        ds_operator_real[7]      =  cos(a*Delta*tau);//cos( a*Delta*tau)*cos(b*Delta*tau);
-        ds_operator_imaginary[0] = sin( a*Delta*tau);//sin( a*Delta*tau)*cos(b*Delta*tau);
+        ds_operator_real[7]      = cos_a_block;//cos( a*Delta*tau)*cos(b*Delta*tau);
+        ds_operator_imaginary[0] = sin_a_block;//sin( a*Delta*tau)*cos(b*Delta*tau);
         ds_operator_imaginary[1] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
-        ds_operator_imaginary[2] = sin(-a*Delta*tau);//sin(-a*Delta*tau)*cos(c*Delta*tau);
+        ds_operator_imaginary[2] = -sin_a_block;//sin(-a*Delta*tau)*cos(c*Delta*tau);
         ds_operator_imaginary[3] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
         ds_operator_imaginary[4] = 0;//cos(-a*Delta*tau)*sin(c*Delta*tau);
-        ds_operator_imaginary[5] = sin(-a*Delta*tau);//sin(-a*Delta*tau)*cos(c*Delta*tau);
+        ds_operator_imaginary[5] = -sin_a_block;//sin(-a*Delta*tau)*cos(c*Delta*tau);
         ds_operator_imaginary[6] = 0;//cos( a*Delta*tau)*sin(b*Delta*tau);
-        ds_operator_imaginary[7] = sin( a*Delta*tau);//sin( a*Delta*tau)*cos(b*Delta*tau);
+        ds_operator_imaginary[7] = sin_a_block;//sin( a*Delta*tau)*cos(b*Delta*tau);
 
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
@@ -638,25 +646,25 @@ void spin_system::double_spin_op_z(double t){
           double psi_real_temp_n3      = 0;
           double psi_imaginary_temp_n3 = 0;
 
-          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] + ds_operator_real[1]*psi_real[n3]
-                                  -ds_operator_imaginary[0]*psi_imaginary[n0] - ds_operator_imaginary[1]*psi_imaginary[n3];
-          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] + ds_operator_imaginary[1]*psi_real[n3]
-                                  +ds_operator_real[0]*psi_imaginary[n0] + ds_operator_real[1]*psi_imaginary[n3];
+          psi_real_temp_n0      = ds_operator_real[0]*psi_real[n0] /*+ ds_operator_real[1]*psi_real[n3]*/
+                                  -ds_operator_imaginary[0]*psi_imaginary[n0] /*- ds_operator_imaginary[1]*psi_imaginary[n3]*/;
+          psi_imaginary_temp_n0 = ds_operator_imaginary[0]*psi_real[n0] /*+ ds_operator_imaginary[1]*psi_real[n3]*/
+                                  +ds_operator_real[0]*psi_imaginary[n0]/* + ds_operator_real[1]*psi_imaginary[n3]*/;
 
-          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] + ds_operator_real[3]*psi_real[n2]
-                                  -ds_operator_imaginary[2]*psi_imaginary[n1] - ds_operator_imaginary[3]*psi_imaginary[n2];
-          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] + ds_operator_imaginary[3]*psi_real[n2]
-                                  +ds_operator_real[2]*psi_imaginary[n1] + ds_operator_real[3]*psi_imaginary[n2];
+          psi_real_temp_n1      = ds_operator_real[2]*psi_real[n1] /*+ ds_operator_real[3]*psi_real[n2]*/
+                                  -ds_operator_imaginary[2]*psi_imaginary[n1] /*- ds_operator_imaginary[3]*psi_imaginary[n2]*/;
+          psi_imaginary_temp_n1 = ds_operator_imaginary[2]*psi_real[n1] /*+ ds_operator_imaginary[3]*psi_real[n2]*/
+                                  +ds_operator_real[2]*psi_imaginary[n1] /*+ ds_operator_real[3]*psi_imaginary[n2]*/;
 
-          psi_real_temp_n2      = ds_operator_real[4]*psi_real[n1] + ds_operator_real[5]*psi_real[n2]
-                                  -ds_operator_imaginary[4]*psi_imaginary[n1] - ds_operator_imaginary[5]*psi_imaginary[n2];
-          psi_imaginary_temp_n2 = ds_operator_imaginary[4]*psi_real[n1] + ds_operator_imaginary[5]*psi_real[n2]
-                                  +ds_operator_real[4]*psi_imaginary[n1] + ds_operator_real[5]*psi_imaginary[n2];
+          psi_real_temp_n2      = /*ds_operator_real[4]*psi_real[n1] +*/ ds_operator_real[5]*psi_real[n2]
+                                  /*-ds_operator_imaginary[4]*psi_imaginary[n1]*/ - ds_operator_imaginary[5]*psi_imaginary[n2];
+          psi_imaginary_temp_n2 = /*ds_operator_imaginary[4]*psi_real[n1] */+ ds_operator_imaginary[5]*psi_real[n2]
+                                  /*+ds_operator_real[4]*psi_imaginary[n1]*/ + ds_operator_real[5]*psi_imaginary[n2];
 
-          psi_real_temp_n3      = ds_operator_real[6]*psi_real[n0] + ds_operator_real[7]*psi_real[n3]
-                                  -ds_operator_imaginary[6]*psi_imaginary[n0] - ds_operator_imaginary[7]*psi_imaginary[n3];
-          psi_imaginary_temp_n3 = ds_operator_imaginary[6]*psi_real[n0] + ds_operator_imaginary[7]*psi_real[n3]
-                                  +ds_operator_real[6]*psi_imaginary[n0] + ds_operator_real[7]*psi_imaginary[n3];
+          psi_real_temp_n3      = /*ds_operator_real[6]*psi_real[n0] +*/ ds_operator_real[7]*psi_real[n3]
+                                  /*-ds_operator_imaginary[6]*psi_imaginary[n0]*/ - ds_operator_imaginary[7]*psi_imaginary[n3];
+          psi_imaginary_temp_n3 = /*ds_operator_imaginary[6]*psi_real[n0] */+ ds_operator_imaginary[7]*psi_real[n3]
+                                  /*+ds_operator_real[6]*psi_imaginary[n0]*/ + ds_operator_real[7]*psi_imaginary[n3];
 
           psi_real[n0]      = psi_real_temp_n0;
           psi_imaginary[n0] = psi_imaginary_temp_n0;
