@@ -860,7 +860,7 @@ void spin_system::run(){
     }
     Delta=step*tau/T;
     Gamma=1-Delta;
-    spin('x',0);
+    // spin('x',0);
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
