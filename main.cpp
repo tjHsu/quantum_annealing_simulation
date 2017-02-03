@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,1000.,0.01);
+  test.initialize(8,10.,0.01);
 
 
   double norm=0.;
@@ -570,6 +570,8 @@ void spin_system::double_spin_op_y(double t){
     }
   // }
 // }
+
+
 /*
   To operate sigma_z*sigma_z
   Input:
@@ -920,9 +922,6 @@ void spin_system::run(){
   cout<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
-
-
-
 
   for (int step = 0; step < total_steps+1; step++){
     for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
