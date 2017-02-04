@@ -72,11 +72,11 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,10.,0.01);
+  test.initialize(4,10.,0.01);
 
 
   double norm=0.;
-  for (int i = 0; i < (int) pow(2,8); i++) {
+  for (int i = 0; i < (int) pow(2,4); i++) {
     norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
   }
   cout<<"norm before run = "<<norm<<endl;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]){
 
   double max=0.;
   int location;
-  for (int i = 0; i < (int) pow(2,8); i++) {
+  for (int i = 0; i < (int) pow(2,4); i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
     norm+=tmp;
     if (tmp > max) {
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]){
   cout<<"location after run = "<<location<<endl;
 
   ofstream Coefficient_out("coefficient_out_pd.dat");
-  for (int i = 0; i < (int) pow(2,8); i++) {
+  for (int i = 0; i < (int) pow(2,4); i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
     if(tmp<1e-3){
       Coefficient_out<<0<<endl;
@@ -142,7 +142,7 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  generate_initial_state("allx");
+  generate_initial_state("try");
 
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
@@ -259,6 +259,36 @@ void spin_system::generate_initial_state(char const * d){
         psi_real[i]      =pow(nofstates, -0.5);
         psi_imaginary[i] =0;
     }
+  }
+
+  else if ("try"==d){
+    //I tried to essamble two 4-spins state into a 8-spin computational basis here.
+    //the idea is to direct porduct them.
+    double* t1,*t2,*t3,*t4;
+    t1 = new double [16];
+    t2 = new double [16];
+    t3 = new double [16];
+    t4 = new double [16];
+    read(16,t1,"psi_real.dat");
+    read(16,t2,"psi_imagine.dat");
+    read(16,t3,"psi_real2.dat");
+    read(16,t4,"psi_imagine2.dat");
+    for (int i = 0; i < 16; i++) {
+      cout<<t1[i]<<" "<<t2[i]<<" "<<t3[i]<<" "<<t4[i]<<" "<<endl;
+    }
+
+    double *tall;
+    tall=new double [256];
+    ofstream try_out("try.dat");
+    for (int i = 0; i < 16; i++) {
+      for (int j = 0; j < 16; j++) {
+        tall[i*16+j]=t1[i]*t3[j]-t2[i]*t4[j];
+        try_out<<tall[i*16+j]<<endl;
+      }
+    }
+
+    cout<<"Enter try"<<endl;
+
   }
   else {
     cout<<endl<<"Wrong Parameter for function: generate_initial_state(char)"<<endl;
