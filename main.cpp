@@ -44,8 +44,6 @@ private:
   double* Jx_l_marked;
   int count_x;
 
-public:
-  void initialize(int ,double ,double);
   void single_spin_op(double);
   void double_spin_op(double);
   void double_spin_op_x(double);
@@ -54,8 +52,15 @@ public:
   void generate_initial_state(char const *);
   void energy(double);
   void spin(char,int);
-  void run();
+
   void read(int,double*,char const *);
+  void generate(int, double*, double*, char const *, char const *, char const *, char const *);
+
+public:
+  void initialize(int ,double ,double);
+  void run();
+
+
   double* psi_real;
   double* psi_imaginary;
   double* psi_tmp_real;
@@ -72,11 +77,15 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(4,10.,0.01);
+  test.initialize(8,10.,0.01);
+
+  for (int i = 0; i < 256; i++) {
+    cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
+  }
 
 
   double norm=0.;
-  for (int i = 0; i < (int) pow(2,4); i++) {
+  for (int i = 0; i < (int) pow(2,8); i++) {
     norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
   }
   cout<<"norm before run = "<<norm<<endl;
@@ -95,7 +104,7 @@ int main(int argc, char* argv[]){
 
   double max=0.;
   int location;
-  for (int i = 0; i < (int) pow(2,4); i++) {
+  for (int i = 0; i < (int) pow(2,8); i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
     norm+=tmp;
     if (tmp > max) {
@@ -108,7 +117,7 @@ int main(int argc, char* argv[]){
   cout<<"location after run = "<<location<<endl;
 
   ofstream Coefficient_out("coefficient_out_pd.dat");
-  for (int i = 0; i < (int) pow(2,4); i++) {
+  for (int i = 0; i < (int) pow(2,8); i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
     if(tmp<1e-3){
       Coefficient_out<<0<<endl;
@@ -142,7 +151,7 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  generate_initial_state("try");
+  generate(8,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","psi_real2.dat","psi_imagine2.dat");
 
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
@@ -902,6 +911,48 @@ void spin_system::read(int N, double* Array, char const * filename ){
   for (i = 0; i < N; i++) {
     // cout<<filename<<" "<<i<<"th element ="<<Array[i]<< endl;
   }
+}
+
+/*
+  Try to read the initial basis state from the system and the Enivironment
+  And then combine then together into a new state.
+  Input:
+    int: the # of total spin.
+    double*: the real part
+    double*: the imaginary part
+    char const*: the basis state of the system
+    char const*: the basis state of the environment
+*/
+void spin_system::generate(int N, double* array_real, double* array_imagine, char const* filename_sysr, char const* filename_sysi, char const* filename_envr, char const* filename_envi ){
+  // ifstream sysr_state;
+  // ifstream envr_state;
+  // ifstream sysi_state;
+  // ifstream envi_state;
+  //
+  // sysr_state.open(filename_sysr);
+  // envr_state.open(filename_envr);
+  // sysi_state.open(filename_sysi);
+  // envi_state.open(filename_envi);
+  double *sys_real, *sys_imag, *env_real, *env_imag;
+  int N_half=(int) pow(2,N/2);
+  sys_real=new double[N_half];
+  sys_imag=new double[N_half];
+  env_real=new double[N_half];
+  env_imag=new double[N_half];
+  read(N_half, sys_real, filename_sysr);
+  read(N_half, sys_imag, filename_sysi);
+  read(N_half, env_real, filename_envr);
+  read(N_half, env_imag, filename_envi);
+
+  ofstream state_out("state_complete.dat");
+  for (int i = 0; i < N_half; i++) {
+    for (int j = 0; j < N_half; j++) {
+      array_real[i*N_half+j]=sys_real[i]*env_real[j]-sys_imag[i]*env_imag[j];
+      array_imagine[i*N_half+j]=sys_real[i]*env_imag[j]+sys_imag[i]*env_real[j];
+      state_out<<array_real[i*N_half+j]<<" "<<array_imagine[i*N_half+j]<<endl;
+    }
+  }
+
 }
 
 
