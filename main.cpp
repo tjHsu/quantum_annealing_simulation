@@ -51,7 +51,7 @@ private:
   void double_spin_op_z(double);
   void generate_initial_state(char const *);
   void energy(double);
-  void spin(char,int);
+  double spin(char,int);
 
   void read(int,double*,char const *);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
@@ -59,7 +59,7 @@ private:
 public:
   void initialize(int ,double ,double);
   void run();
-
+  void output();
 
   double* psi_real;
   double* psi_imaginary;
@@ -77,11 +77,11 @@ int main(int argc, char* argv[]){
 
   spin_system test;
 
-  test.initialize(8,10.,0.01);
+  test.initialize(8,1000.,0.01);
 
-  for (int i = 0; i < 256; i++) {
-    cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
-  }
+  // for (int i = 0; i < 256; i++) {
+  //   cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
+  // }
 
 
   double norm=0.;
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]){
   cout<<"max after run = "<<max<<endl;
   cout<<"location after run = "<<location<<endl;
 
-  ofstream Coefficient_out("coefficient_out_pd.dat");
+  ofstream Coefficient_out("coefficient.dat");
   for (int i = 0; i < (int) pow(2,8); i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
     if(tmp<1e-3){
@@ -151,8 +151,8 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  generate(8,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","psi_real2.dat","psi_imagine2.dat");
-
+  // generate(8,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","psi_real2.dat","psi_imagine2.dat");
+  generate_initial_state("allx");
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
@@ -288,11 +288,11 @@ void spin_system::generate_initial_state(char const * d){
 
     double *tall;
     tall=new double [256];
-    ofstream try_out("try.dat");
+    // ofstream try_out("try.dat");
     for (int i = 0; i < 16; i++) {
       for (int j = 0; j < 16; j++) {
         tall[i*16+j]=t1[i]*t3[j]-t2[i]*t4[j];
-        try_out<<tall[i*16+j]<<endl;
+        // try_out<<tall[i*16+j]<<endl;
       }
     }
 
@@ -820,7 +820,7 @@ void spin_system::energy(double t){
     d: 'x' for sigma_x, 'y' for sigma_y, 'z' for sigma_z
     which_spin: which spin we want to calculate (count from 0)
 */
-void spin_system::spin(char d,int which_spin){
+double spin_system::spin(char d,int which_spin){
 
   for (int i = 0; i < nofstates; i++) {
     psi_tmp_real[i]      = 0.;
@@ -858,7 +858,7 @@ void spin_system::spin(char d,int which_spin){
           psi_tmp_imaginary[j]+= -0.5*psi_imaginary[j];
         }
         else {
-          cout<<"run input for calculating average spin"<<endl;
+          cout<<"WRONG input for calculating average spin"<<endl;
         }
 
       }
@@ -870,9 +870,10 @@ void spin_system::spin(char d,int which_spin){
     average_spin += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
     check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
   }
+
   if (abs(check_img)>1e-15)
     cout<<"Something went wrong in function spin()"<<check_img<<endl;
-
+  return average_spin;
 
 
 }
@@ -944,17 +945,20 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
   read(N_half, env_real, filename_envr);
   read(N_half, env_imag, filename_envi);
 
-  ofstream state_out("state_complete.dat");
+  // ofstream state_out("state_complete.dat");
   for (int i = 0; i < N_half; i++) {
     for (int j = 0; j < N_half; j++) {
       array_real[i*N_half+j]=sys_real[i]*env_real[j]-sys_imag[i]*env_imag[j];
       array_imagine[i*N_half+j]=sys_real[i]*env_imag[j]+sys_imag[i]*env_real[j];
-      state_out<<array_real[i*N_half+j]<<" "<<array_imagine[i*N_half+j]<<endl;
+      // state_out<<array_real[i*N_half+j]<<" "<<array_imagine[i*N_half+j]<<endl;
     }
   }
-
 }
 
+void output(){
+  // ofstream output("output.dat");
+
+}
 
 /* The main process to run the simulation
   16.12.2016: I haven't add the time evolution part. It should be added after.
@@ -962,9 +966,14 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
   03.02.2017: can handle with sigma_(x,y,z) and sigma_(x,y,z)*sigma_(x,y,z) respectly.
 */
 void spin_system::run(){
-  ofstream out_data("../Result/product_formula/gs_T_1e100_t_1e-1.dat");
-  ofstream E_out("../Result/Verify/spin_x4_pd.dat");
-
+  // ofstream out_data("../Result/product_formula/gs_T_1e100_t_1e-1.dat");
+  // ofstream E_out("../Result/Verify/spin_x4_pd.dat");
+  ofstream output("output.dat");
+  output<<"Time Energy ";
+  for (int i = 0; i < N; i++) {
+    output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
+  }
+  output<<endl;
   int total_steps=0;
   total_steps=(int) T/tau;
 
@@ -1012,7 +1021,12 @@ void spin_system::run(){
     Delta=step*tau/T;
     Gamma=1-Delta;
 
-    spin('x',0);
+    energy(step*tau);
+    output<<step*tau<<" "<<average_energy<<" ";
+    for (int s = 0; s < N; s++) {
+      output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+    }
+    output<<endl;
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
@@ -1020,17 +1034,17 @@ void spin_system::run(){
     double_spin_op_y(step*tau);
     double_spin_op_x(step*tau);
     single_spin_op(step*tau);
-    // energy(step*tau);
+
 
     double gs=0.;
 
 //     E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
-    E_out<<step*tau<<" "<<average_spin<<endl;
+    // E_out<<step*tau<<" "<<average_spin<<endl;
 
 
-    gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
-    out_data<<step*tau/T<<" "<<gs<<endl;
-    gs =0.;
+    // gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
+    // out_data<<step*tau/T<<" "<<gs<<endl;
+    // gs =0.;
 
   }
 }
