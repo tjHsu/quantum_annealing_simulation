@@ -8,10 +8,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
+#include <complex>
+#include <cmath>
 #include <time.h>
-
+// #define Boltzmann_const 0.000086173303 //m2 kg s-2 K-1
 
 using namespace std;
+#define MKL_Complex16 complex<double>
+#include "mkl.h"
 class spin_system {
 private:
   int N;
@@ -56,11 +60,11 @@ private:
   void read(int,double*,char const *);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
 
+
 public:
   void initialize(int ,double ,double);
   void run();
-  void output();
-
+  void environment(int, double);
   double* psi_real;
   double* psi_imaginary;
   double* psi_tmp_real;
@@ -76,55 +80,56 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
+  test.environment(8,15);
+  test.initialize(16,1000.,0.01);
 
-  test.initialize(8,1000.,0.01);
 
   // for (int i = 0; i < 256; i++) {
   //   cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
   // }
 
 
-  double norm=0.;
-  for (int i = 0; i < (int) pow(2,8); i++) {
-    norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  }
-  cout<<"norm before run = "<<norm<<endl;
-  time_t start=time(0);
-  clock_t t;
-  t = clock();
-  test.run();
-  t =clock()-t;
-  time_t end=time(0);
-  double time=difftime(end,start);
-
-  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  cout<<"costed me "<<time<<" second in real time"<<endl;
-
-  norm =0.;
-
-  double max=0.;
-  int location;
-  for (int i = 0; i < (int) pow(2,8); i++) {
-    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-    norm+=tmp;
-    if (tmp > max) {
-      max = tmp;
-      location = i;
-    }
-  }
-  cout<<"norm after run = "<<norm<<endl;
-  cout<<"max after run = "<<max<<endl;
-  cout<<"location after run = "<<location<<endl;
-
-  ofstream Coefficient_out("coefficient.dat");
-  for (int i = 0; i < (int) pow(2,8); i++) {
-    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-    if(tmp<1e-3){
-      Coefficient_out<<0<<endl;
-    } else {
-    Coefficient_out<<tmp<<endl;
-    }
-  }
+  // double norm=0.;
+  // for (int i = 0; i < (int) pow(2,8); i++) {
+  //   norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  // }
+  // cout<<"norm before run = "<<norm<<endl;
+  // time_t start=time(0);
+  // clock_t t;
+  // t = clock();
+  // test.run();
+  // t =clock()-t;
+  // time_t end=time(0);
+  // double time=difftime(end,start);
+  //
+  // cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  // cout<<"costed me "<<time<<" second in real time"<<endl;
+  //
+  // norm =0.;
+  //
+  // double max=0.;
+  // int location;
+  // for (int i = 0; i < (int) pow(2,8); i++) {
+  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  //   norm+=tmp;
+  //   if (tmp > max) {
+  //     max = tmp;
+  //     location = i;
+  //   }
+  // }
+  // cout<<"norm after run = "<<norm<<endl;
+  // cout<<"max after run = "<<max<<endl;
+  // cout<<"location after run = "<<location<<endl;
+  //
+  // ofstream Coefficient_out("coefficient.dat");
+  // for (int i = 0; i < (int) pow(2,8); i++) {
+  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  //   if(tmp<1e-3){
+  //     Coefficient_out<<0<<endl;
+  //   } else {
+  //   Coefficient_out<<tmp<<endl;
+  //   }
+  // }
 
   cout<<"reutrn "<<0<<endl;
   return 0;
@@ -151,8 +156,8 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  // generate(8,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","psi_real2.dat","psi_imagine2.dat");
-  generate_initial_state("allx");
+  generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
+  // generate_initial_state("allx");
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
@@ -914,6 +919,70 @@ void spin_system::read(int N, double* Array, char const * filename ){
   }
 }
 
+
+/*
+  set up an environment by diagonalize the H matrix.
+  Input:
+    int: the # of spins.
+*/
+void spin_system::environment(int N, double Temperature){
+  // double* env_matrix;
+  // env_matrix=new double[N*(N+1)/2];
+  // read(N*(N+1)/2,env_matrix,filename_H);
+  // for (int i = 0; i < N*(N+1)/2; i++) {
+  //   cout<<env_matrix[i]<<endl;
+  // }
+  double Boltzmann_const=0.000086173303;
+
+  double* env_matrix;
+  env_matrix=new double[nofstates*(nofstates+1)/2];
+  srand (time(NULL));
+  for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+    env_matrix[i]=(double) rand()/RAND_MAX;
+  }
+  // double* ap;
+  // ap=new double[nofstates*(nofstates+1)/2];
+
+  //start preparing variable for lapack use
+  double w[nofstates];
+  int n=(int) pow(2,N);
+  double vl,vu;
+  int il,iu;
+  double abstol = 2*DLAMCH("S");
+  int m;
+  complex<double> ap[nofstates*(nofstates+1)/2];
+  for (int i = 0; i < nofstates*(nofstates+1)/2; i++)
+    ap[i]=env_matrix[i];
+  complex<double> z[nofstates*nofstates];
+  int lda = nofstates;
+  complex<double> work[2*nofstates];
+  double rwork[7*nofstates];
+  int iwork[5*nofstates];
+  int ifail[nofstates];
+  int info;
+  zhpevx("Vector","All","Upper", &n, ap, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
+  double sum=0.;
+  for (int i = 1; i < nofstates; i++) {
+    // cout<<(w[i]-w[0])<<endl;
+    w[i]=exp(-1*(w[i]-w[0])/(Temperature*Boltzmann_const));
+    sum+=w[i];
+  }
+  w[0]=exp(-1*(w[0]-w[0])/(Temperature*Boltzmann_const));
+  sum+=w[0];
+  cout<<sum<<endl;
+  for (int i = 1; i < nofstates; i++) {
+    w[i]=w[i]/sum;
+  }
+  ofstream envr_out("env_real.dat");
+  ofstream envi_out("env_imag.dat");
+  for (int i = 0; i < nofstates; i++) {
+    envr_out<<w[i]<<endl;
+    envi_out<<0<<endl;
+  }
+
+}
+
+
 /*
   Try to read the initial basis state from the system and the Enivironment
   And then combine then together into a new state.
@@ -953,11 +1022,6 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
       // state_out<<array_real[i*N_half+j]<<" "<<array_imagine[i*N_half+j]<<endl;
     }
   }
-}
-
-void output(){
-  // ofstream output("output.dat");
-
 }
 
 /* The main process to run the simulation
@@ -1038,7 +1102,7 @@ void spin_system::run(){
 
     double gs=0.;
 
-//     E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
+    // E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
     // E_out<<step*tau<<" "<<average_spin<<endl;
 
 
