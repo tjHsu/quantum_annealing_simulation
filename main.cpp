@@ -19,9 +19,13 @@ using namespace std;
 class spin_system {
 private:
   int N;
+  int N_sys;
+  int N_env;
   double T;
   double tau;
   int nofstates;
+  int nofstates_sys;
+  int nofstates_env;
 
   double* ss_operator_real;
   double* ss_operator_imaginary;
@@ -62,7 +66,7 @@ private:
 
 
 public:
-  void initialize(int ,double ,double);
+  void initialize(int, int ,double ,double);
   void run();
   void environment(int, double);
   double* psi_real;
@@ -80,56 +84,59 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.environment(8,15);
-  test.initialize(16,1000.,0.01);
+  int N=8;
+  int nofstates=(int) pow(2,N);
+
+  test.initialize(8,0,100.,0.01);
 
 
-  // for (int i = 0; i < 256; i++) {
+  // for (int i = 0; i < nofstates; i++) {
+  //   if (abs(test.psi_real[i])>1e-8||abs(test.psi_imaginary[i])>1e-8)
   //   cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
   // }
 
 
-  // double norm=0.;
-  // for (int i = 0; i < (int) pow(2,8); i++) {
-  //   norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  // }
-  // cout<<"norm before run = "<<norm<<endl;
-  // time_t start=time(0);
-  // clock_t t;
-  // t = clock();
-  // test.run();
-  // t =clock()-t;
-  // time_t end=time(0);
-  // double time=difftime(end,start);
-  //
-  // cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  // cout<<"costed me "<<time<<" second in real time"<<endl;
-  //
-  // norm =0.;
-  //
-  // double max=0.;
-  // int location;
-  // for (int i = 0; i < (int) pow(2,8); i++) {
-  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  //   norm+=tmp;
-  //   if (tmp > max) {
-  //     max = tmp;
-  //     location = i;
-  //   }
-  // }
-  // cout<<"norm after run = "<<norm<<endl;
-  // cout<<"max after run = "<<max<<endl;
-  // cout<<"location after run = "<<location<<endl;
-  //
-  // ofstream Coefficient_out("coefficient.dat");
-  // for (int i = 0; i < (int) pow(2,8); i++) {
-  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  //   if(tmp<1e-3){
-  //     Coefficient_out<<0<<endl;
-  //   } else {
-  //   Coefficient_out<<tmp<<endl;
-  //   }
-  // }
+  double norm=0.;
+  for (int i = 0; i < nofstates; i++) {
+    norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  }
+  cout<<"norm before run = "<<norm<<endl;
+  time_t start=time(0);
+  clock_t t;
+  t = clock();
+  test.run();
+  t =clock()-t;
+  time_t end=time(0);
+  double time=difftime(end,start);
+
+  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  cout<<"costed me "<<time<<" second in real time"<<endl;
+
+  norm =0.;
+
+  double max=0.;
+  int location;
+  for (int i = 0; i < nofstates; i++) {
+    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+    norm+=tmp;
+    if (tmp > max) {
+      max = tmp;
+      location = i;
+    }
+  }
+  cout<<"norm after run = "<<norm<<endl;
+  cout<<"max after run = "<<max<<endl;
+  cout<<"location after run = "<<location<<endl;
+
+  ofstream Coefficient_out("coefficient.dat");
+  for (int i = 0; i < nofstates; i++) {
+    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+    if(tmp<1e-3){
+      Coefficient_out<<0<<endl;
+    } else {
+    Coefficient_out<<tmp<<endl;
+    }
+  }
 
   cout<<"reutrn "<<0<<endl;
   return 0;
@@ -141,8 +148,10 @@ int main(int argc, char* argv[]){
   T: end time
   tau: the size of the timestep
 */
-void spin_system::initialize(int N_user_defined, double T_user_defined, double tau_user_defined){
-  N = N_user_defined;
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined){
+  N_sys = N_sys_user_defined;
+  N_env = N_env_user_defined;
+  N = N_sys+N_env;
   T = T_user_defined;
   tau = tau_user_defined;
   nofstates = (int) pow(2,N);// number of states construct by the number of spins
@@ -156,8 +165,9 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
-  // generate_initial_state("allx");
+  environment(8,0.5);
+  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
+  generate_initial_state("allx");
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
@@ -187,20 +197,20 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     and the factor h for single spin Hamiltonian.
     J should have size as N*(N-1) and the size of h is simply N.
   */
-  J_x = new double [N*N];
-  J_y = new double [N*N];
-  J_z = new double [N*N];
-  h_x = new double [N];
-  h_y = new double [N];
-  h_z = new double [N];
+  J_x = new double [N_sys*N_sys];
+  J_y = new double [N_sys*N_sys];
+  J_z = new double [N_sys*N_sys];
+  h_x = new double [N_sys];
+  h_y = new double [N_sys];
+  h_z = new double [N_sys];
   h_x_start=1;
-  for (int i = 0; i < N*N; i++){
+  for (int i = 0; i < N_sys*N_sys; i++){
     J_x[i] = 0.;
     J_y[i] = 0.;
     J_z[i] = 0.;
   }
 
-  for (int i = 0; i < N; i++){
+  for (int i = 0; i < N_sys; i++){
     h_x[i]=0.;
     h_y[i]=0.;
     h_z[i]=0.;
@@ -214,10 +224,10 @@ void spin_system::initialize(int N_user_defined, double T_user_defined, double t
     H_imaginary[i]= 0.;
   }
 
-  read(N*N,J_z,"J2.txt");
-  read(N*N,J_x,"J2x.txt");
-  read(N*N,J_y,"J2y.txt");
-  read(N,h_z,"h2.txt");
+  read(N_sys*N_sys,J_z,"J2.txt");
+  read(N_sys*N_sys,J_x,"J2x.txt");
+  read(N_sys*N_sys,J_y,"J2y.txt");
+  read(N_sys,h_z,"h2.txt");
 
 
   Gamma=0; //time evolution of the initial Hamiltonian. Goes from 1 to 0
@@ -318,7 +328,7 @@ void spin_system::generate_initial_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
-  for (int k = 0; k < N; k++) {
+  for (int k = 0; k < N_sys; k++) {
     int i1=(int) pow(2,k);
 
     /* update the single spin Hamiltonian matrix with t.
@@ -404,7 +414,7 @@ void spin_system::double_spin_op_x(double t){
 
     int k=Jx_k_marked[i];
     int l=Jx_l_marked[i];
-      double J=J_x[k+l*N];
+      double J=J_x[k+l*N_sys];
       // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
@@ -413,8 +423,8 @@ void spin_system::double_spin_op_x(double t){
         */
 
         double a=0;//J_z[k+l*N]/1.;//4.;
-        double b=J_x[k+l*N];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
-        double c=J_x[k+l*N];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+        double b=J_x[k+l*N_sys];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+        double c=J_x[k+l*N_sys];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
@@ -514,7 +524,7 @@ void spin_system::double_spin_op_y(double t){
   for (int i = 0; i < count_y; i++) {
     int k=Jy_k_marked[i];
     int l=Jy_l_marked[i];
-      double J=J_y[k+l*N];
+      double J=J_y[k+l*N_sys];
       // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
@@ -523,8 +533,8 @@ void spin_system::double_spin_op_y(double t){
         */
 
         double a=0;//J_z[k+l*N]/1.;//4.;
-        double b=-J_y[k+l*N];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
-        double c=J_y[k+l*N];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+        double b=-J_y[k+l*N_sys];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+        double c=J_y[k+l*N_sys];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
@@ -630,7 +640,7 @@ void spin_system::double_spin_op_z(double t){
 
     int k=Jz_k_marked[i];
     int l=Jz_l_marked[i];
-      double J=J_z[k+l*N];
+      double J=J_z[k+l*N_sys];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       // if(abs(J)>1e-15){
 
@@ -640,7 +650,7 @@ void spin_system::double_spin_op_z(double t){
           because of reading convenience I didn't do so.
         */
 
-        double a=J_z[k+l*N]/1.;//4.;
+        double a=J_z[k+l*N_sys]/1.;//4.;
         double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
@@ -741,7 +751,7 @@ void spin_system::energy(double t){
   double check_img=0.;
 
   double hx=-1*h_x_start;
-  for (int k = 0; k < N; k++) {
+  for (int k = 0; k < N_sys; k++) {
     int i1=(int) pow(2,k);
     double hz=-1*h_z[k];
     for (int l = 0; l < nofstates; l+=2) {
@@ -762,11 +772,11 @@ void spin_system::energy(double t){
     }
   }
 
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
-      double Jx=-1*J_x[k+l*N];
-      double Jy=-1*J_y[k+l*N];
-      double Jz=-1*J_z[k+l*N];
+  for (int k = 0; k <N_sys ; k++) {
+    for (int l = k+1; l < N_sys; l++) {
+      double Jx=-1*J_x[k+l*N_sys];
+      double Jy=-1*J_y[k+l*N_sys];
+      double Jz=-1*J_z[k+l*N_sys];
       if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
@@ -815,8 +825,8 @@ void spin_system::energy(double t){
     average_energy += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
     check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
   }
-  if (abs(check_img)>1e-15)
-    cout<<"Something went wrong in functoin energy() "<<check_img<<endl;
+  if (abs(check_img)>1e-13)
+    cout<<"Something went wrong in functoin energy()   "<<check_img<<endl;
 }
 
 /*
@@ -834,7 +844,7 @@ double spin_system::spin(char d,int which_spin){
   average_spin=0.;
   double check_img=0.;
 
-  for (int k = 0; k < N; k++) {
+  for (int k = 0; k < N_sys; k++) {
     if (k==which_spin) {
       int i1=(int) pow(2,k);
       for (int l = 0; l < nofstates; l+=2) {
@@ -876,7 +886,7 @@ double spin_system::spin(char d,int which_spin){
     check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
   }
 
-  if (abs(check_img)>1e-15)
+  if (abs(check_img)>1e-13)
     cout<<"Something went wrong in function spin()"<<check_img<<endl;
   return average_spin;
 
@@ -894,6 +904,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
   /* Set the input class myfile and open the file "filename".
     Check whether it is open with .is_open boolean.
   */
+  // cout<<"inside read() N= "<<filename<<" "<<N<<endl;
   ifstream myfile;
   myfile.open(filename);
   if (!myfile.is_open()) {
@@ -932,8 +943,8 @@ void spin_system::environment(int N, double Temperature){
   // for (int i = 0; i < N*(N+1)/2; i++) {
   //   cout<<env_matrix[i]<<endl;
   // }
-  double Boltzmann_const=0.000086173303;
-
+  double Boltzmann_const= 1;//we use 1 here insted of 0.000086173303 ev/K;
+  int nofstates=(int) pow(2,N);
   double* env_matrix;
   env_matrix=new double[nofstates*(nofstates+1)/2];
   srand (time(NULL));
@@ -945,7 +956,7 @@ void spin_system::environment(int N, double Temperature){
 
   //start preparing variable for lapack use
   double w[nofstates];
-  int n=(int) pow(2,N);
+  int n=nofstates;
   double vl,vu;
   int il,iu;
   double abstol = 2*DLAMCH("S");
@@ -967,9 +978,9 @@ void spin_system::environment(int N, double Temperature){
     w[i]=exp(-1*(w[i]-w[0])/(Temperature*Boltzmann_const));
     sum+=w[i];
   }
-  w[0]=exp(-1*(w[0]-w[0])/(Temperature*Boltzmann_const));
+  w[0]=1;//exp(-1*(w[0]-w[0])/(Temperature*Boltzmann_const));
   sum+=w[0];
-  cout<<sum<<endl;
+  cout<<"sum of z: "<<sum<<endl;
   for (int i = 1; i < nofstates; i++) {
     w[i]=w[i]/sum;
   }
@@ -1034,7 +1045,7 @@ void spin_system::run(){
   // ofstream E_out("../Result/Verify/spin_x4_pd.dat");
   ofstream output("output.dat");
   output<<"Time Energy ";
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < N_sys; i++) {
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
   }
   output<<endl;
@@ -1047,25 +1058,25 @@ void spin_system::run(){
   count_z=0;
   count_y=0;
   count_x=0;
-  Jz_k_marked=new double [N*(N+1)/2];
-  Jz_l_marked=new double [N*(N+1)/2];
-  Jy_k_marked=new double [N*(N+1)/2];
-  Jy_l_marked=new double [N*(N+1)/2];
-  Jx_k_marked=new double [N*(N+1)/2];
-  Jx_l_marked=new double [N*(N+1)/2];
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
-      if (abs(J_z[k+l*N])>1e-15){
+  Jz_k_marked=new double [N_sys*(N_sys+1)/2];
+  Jz_l_marked=new double [N_sys*(N_sys+1)/2];
+  Jy_k_marked=new double [N_sys*(N_sys+1)/2];
+  Jy_l_marked=new double [N_sys*(N_sys+1)/2];
+  Jx_k_marked=new double [N_sys*(N_sys+1)/2];
+  Jx_l_marked=new double [N_sys*(N_sys+1)/2];
+  for (int k = 0; k <N_sys ; k++) {
+    for (int l = k+1; l < N_sys; l++) {
+      if (abs(J_z[k+l*N_sys])>1e-15){
         Jz_k_marked[count_z]=k;
         Jz_l_marked[count_z]=l;
         count_z+=1;
       }
-      if (abs(J_y[k+l*N])>1e-15){
+      if (abs(J_y[k+l*N_sys])>1e-15){
         Jy_k_marked[count_y]=k;
         Jy_l_marked[count_y]=l;
         count_y+=1;
       }
-      if (abs(J_x[k+l*N])>1e-15){
+      if (abs(J_x[k+l*N_sys])>1e-15){
         Jx_k_marked[count_x]=k;
         Jx_l_marked[count_x]=l;
         count_x+=1;
@@ -1073,7 +1084,7 @@ void spin_system::run(){
     }
   }
 
-  cout<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
+  cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
 
@@ -1087,7 +1098,7 @@ void spin_system::run(){
 
     energy(step*tau);
     output<<step*tau<<" "<<average_energy<<" ";
-    for (int s = 0; s < N; s++) {
+    for (int s = 0; s < N_sys; s++) {
       output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
     }
     output<<endl;
