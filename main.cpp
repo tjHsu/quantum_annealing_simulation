@@ -37,6 +37,7 @@ private:
   double* Jx_env;
   double* Jy_env;
   double* Jz_env;
+  double G;
   double* h_x;
   double* h_y;
   double* h_z;
@@ -91,13 +92,12 @@ int main(int argc, char* argv[]){
 
   spin_system test;
   test.initialize(8,8,100,0.1);
-  test.Jenv_generate(8);
-  test.Jse_generate(8,8,0.5);
-  test.environment(8,150);
+
+
   int N=8;
   int nofstates=(int) pow(2,N);
 
-  test.initialize(8,0,100.,0.01);
+  // test.initialize(8,0,100.,0.01);
 
 
 
@@ -162,43 +162,6 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   tau = tau_user_defined;
   nofstates = (int) pow(2,N);// number of states construct by the number of spins
 
-  /* initialize the wave function in the ground state
-  */
-
-  psi_real = new double [nofstates];
-  psi_imaginary = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-      psi_real[i]      = 0;
-      psi_imaginary[i] = 0;
-  }
-  // environment(8,0.5);
-  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
-  generate_initial_state("allx");
-  psi_tmp_real = new double [nofstates];
-  psi_tmp_imaginary = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-    psi_tmp_real[i]      = 0;
-    psi_tmp_imaginary[i] = 0;
-  }
-
-  average_energy=0.;
-  /* initialize the  matrix. We have two kind of Hamiltonian operator here.
-    First is the single spin operator, ss_operator.
-    Second is the double spin operator, ds_operator.
-  */
-  ss_operator_real      = new double [4];
-  ss_operator_imaginary = new double [4];
-  ds_operator_real      = new double [8];
-  ds_operator_imaginary = new double [8];
-  for (int i = 0; i < 4; i++) {
-    ss_operator_real[i]      = 0;
-    ss_operator_imaginary[i] = 0;
-  }
-  for (int i = 0; i < 8; i++) {
-    ds_operator_real[i]      = 0;
-    ds_operator_imaginary[i] = 0;
-  }
-
   /* initialize the coupling factor J for double spin Hamiltonian,
     and the factor h for single spin Hamiltonian.
     J should have size as N*(N-1) and the size of h is simply N.
@@ -230,18 +193,65 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     h_z[i]=0.;
   }
 
-  /* initialize the Hamiltonian matrix for calculating the energy */
-  H_real = new double [nofstates*(nofstates+1)/2];
-  H_imaginary = new double [nofstates*(nofstates+1)/2];
-  for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
-    H_real[i] = 0.;
-    H_imaginary[i]= 0.;
-  }
-
+  G=0.5;
   read(N_sys*N_sys,J_z,"J2.txt");
   read(N_sys*N_sys,J_x,"J2x.txt");
   read(N_sys*N_sys,J_y,"J2y.txt");
   read(N_sys,h_z,"h2.txt");
+  Jenv_generate(N_env);
+  Jse_generate(N_sys,N_env,G);
+
+  environment(8,150);
+
+  /* initialize the wave function in the ground state
+  */
+
+  psi_real = new double [nofstates];
+  psi_imaginary = new double [nofstates];
+  for (int i = 0; i < nofstates; i++) {
+      psi_real[i]      = 0;
+      psi_imaginary[i] = 0;
+  }
+
+  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
+  generate_initial_state("allx");
+  psi_tmp_real = new double [nofstates];
+  psi_tmp_imaginary = new double [nofstates];
+  for (int i = 0; i < nofstates; i++) {
+    psi_tmp_real[i]      = 0;
+    psi_tmp_imaginary[i] = 0;
+  }
+
+  average_energy=0.;
+  /* initialize the  matrix. We have two kind of Hamiltonian operator here.
+    First is the single spin operator, ss_operator.
+    Second is the double spin operator, ds_operator.
+    Ref. Article: Computational Methods for Simulating Quantum Computers euqation (68) & equation (70).
+  */
+  ss_operator_real      = new double [4];
+  ss_operator_imaginary = new double [4];
+  ds_operator_real      = new double [8];
+  ds_operator_imaginary = new double [8];
+  for (int i = 0; i < 4; i++) {
+    ss_operator_real[i]      = 0;
+    ss_operator_imaginary[i] = 0;
+  }
+  for (int i = 0; i < 8; i++) {
+    ds_operator_real[i]      = 0;
+    ds_operator_imaginary[i] = 0;
+  }
+
+
+
+  /* initialize the Hamiltonian matrix for calculating the energy */
+  // H_real = new double [nofstates*(nofstates+1)/2];
+  // H_imaginary = new double [nofstates*(nofstates+1)/2];
+  // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+  //   H_real[i] = 0.;
+  //   H_imaginary[i]= 0.;
+  // }
+
+
 
 
   Gamma=0; //time evolution of the initial Hamiltonian. Goes from 1 to 0
@@ -1208,10 +1218,10 @@ void spin_system::run(){
   //////////////////////////////////////////////////
 
   for (int step = 0; step < total_steps+1; step++){
-    for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
-      H_real[i]=0.;
-      H_imaginary[i]=0.;
-    }
+    // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+    //   H_real[i]=0.;
+    //   H_imaginary[i]=0.;
+    // }
     Delta=step*tau/T;
     Gamma=1-Delta;
 
