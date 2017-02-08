@@ -34,6 +34,9 @@ private:
   double* J_x;
   double* J_y;
   double* J_z;
+  double* Jx_env;
+  double* Jy_env;
+  double* Jz_env;
   double* h_x;
   double* h_y;
   double* h_z;
@@ -65,6 +68,7 @@ private:
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
 
 
+
 public:
   void initialize(int, int ,double ,double);
   void run();
@@ -77,6 +81,8 @@ public:
   double* H_imaginary;
   double average_energy;
   double average_spin;
+  void Jenv_generate(int);
+  void Jse_generate(int, int, double);
 
 
 };
@@ -84,16 +90,16 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
+  test.initialize(8,8,100,0.1);
+  test.Jenv_generate(8);
+  test.Jse_generate(8,8,0.5);
+  test.environment(8,150);
   int N=8;
   int nofstates=(int) pow(2,N);
 
   test.initialize(8,0,100.,0.01);
 
 
-  // for (int i = 0; i < nofstates; i++) {
-  //   if (abs(test.psi_real[i])>1e-8||abs(test.psi_imaginary[i])>1e-8)
-  //   cout<<test.psi_real[i]<<" "<<test.psi_imaginary[i]<<endl;
-  // }
 
 
   double norm=0.;
@@ -165,7 +171,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  environment(8,0.5);
+  // environment(8,0.5);
   // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
   generate_initial_state("allx");
   psi_tmp_real = new double [nofstates];
@@ -200,6 +206,9 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   J_x = new double [N_sys*N_sys];
   J_y = new double [N_sys*N_sys];
   J_z = new double [N_sys*N_sys];
+  Jx_env = new double [N_env*N_env];
+  Jy_env = new double [N_env*N_env];
+  Jz_env = new double [N_env*N_env];
   h_x = new double [N_sys];
   h_y = new double [N_sys];
   h_z = new double [N_sys];
@@ -208,6 +217,11 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     J_x[i] = 0.;
     J_y[i] = 0.;
     J_z[i] = 0.;
+  }
+  for (int i = 0; i < N_env*N_env; i++){
+    Jx_env[i] = 0.;
+    Jy_env[i] = 0.;
+    Jz_env[i] = 0.;
   }
 
   for (int i = 0; i < N_sys; i++){
@@ -937,24 +951,69 @@ void spin_system::read(int N, double* Array, char const * filename ){
     int: the # of spins.
 */
 void spin_system::environment(int N, double Temperature){
-  // double* env_matrix;
-  // env_matrix=new double[N*(N+1)/2];
-  // read(N*(N+1)/2,env_matrix,filename_H);
-  // for (int i = 0; i < N*(N+1)/2; i++) {
-  //   cout<<env_matrix[i]<<endl;
-  // }
+
+  read(N*N,Jx_env,"Jx_env.txt");
+  read(N*N,Jy_env,"Jy_env.txt");
+  read(N*N,Jz_env,"Jz_env.txt");
+  //Construct the H_env matrix for the later use for solving energy of the heat bath
   double Boltzmann_const= 1;//we use 1 here insted of 0.000086173303 ev/K;
   int nofstates=(int) pow(2,N);
-  double* env_matrix;
-  env_matrix=new double[nofstates*(nofstates+1)/2];
-  srand (time(NULL));
-  for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
-    env_matrix[i]=(double) rand()/RAND_MAX;
+  double* H_env;
+  H_env=new double[nofstates*(nofstates+1)/2];
+  /* // Since I don't set single spin magnetization for environment, I comment this part now
+  for (int k = 0; k < N; k++) {
+    int i1=(int) pow(2,k);
+    double h_x_init=0;
+    double h_z_tmp =0;
+
+    for (int l = 0; l < nofstates; l+=2) {
+      int i2= l & i1;
+      int i = l - i2 +i2/i1;
+      int j = i+i1;
+        H[i+i*(i+1)/2] += 1.*Delta*h_z_tmp;
+        H[j+j*(j+1)/2] += -1.*Delta*h_z_tmp;
+        H[i+j*(j+1)/2] += 1.*Gamma*h_x_init;
+    }
+  }*/
+  for (int k = 0; k < N; k++) {
+    for (int l = k+1; l < N; l++) {
+      double Jx=-1*Jx_env[k+l*N];
+      double Jy=-1*Jy_env[k+l*N];
+      double Jz=-1*Jz_env[k+l*N];
+      if(Jx!=0||Jy!=0||Jz!=0){
+        int nii=(int) pow(2,k);
+        int njj=(int) pow(2,l);
+        for (int m=0; m<nofstates; m+=4) {
+          int n3 = m & njj;
+          int n2 = m-n3+(n3+n3)/njj;
+          int n1 = n2 & nii;
+          int n0 = n2 - n1+n1/nii;
+          n1=n0+nii;
+          n2=n0+njj;
+          n3=n1+njj;
+
+          H_env[n0+n0*(n0+1)/2] += 1.*Jz;
+          H_env[n1+n1*(n1+1)/2] +=-1.*Jz;
+          H_env[n2+n2*(n2+1)/2] +=-1.*Jz;
+          H_env[n3+n3*(n3+1)/2] += 1.*Jz;
+
+          H_env[n0+n3*(n3+1)/2] += 1.*Jx;
+          H_env[n1+n2*(n2+1)/2] += 1.*Jx;
+          // H[n2+n1*(n1+1)/2] += 1.*Jx;
+          // H[n3+n0*(n0+1)/2] += 1.*Jx;
+
+          H_env[n0+n3*(n3+1)/2] +=-1.*Jy;
+          H_env[n1+n2*(n2+1)/2] += 1.*Jy;
+          // H[n2+n1*(n1+1)/2] += 1.*Jy;
+          // H[n3+n0*(n0+1)/2] +=-1.*Jy;
+
+        }
+      }
+    }
   }
-  // double* ap;
-  // ap=new double[nofstates*(nofstates+1)/2];
 
   //start preparing variable for lapack use
+  //solving the energy to w[] array. then use it as the coefficient of |E_B>.
   double w[nofstates];
   int n=nofstates;
   double vl,vu;
@@ -963,7 +1022,7 @@ void spin_system::environment(int N, double Temperature){
   int m;
   complex<double> ap[nofstates*(nofstates+1)/2];
   for (int i = 0; i < nofstates*(nofstates+1)/2; i++)
-    ap[i]=env_matrix[i];
+    ap[i]=H_env[i];
   complex<double> z[nofstates*nofstates];
   int lda = nofstates;
   complex<double> work[2*nofstates];
@@ -1034,6 +1093,66 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
     }
   }
 }
+
+/*
+  Make J_env txt file randomly between [-1,1]
+  It is the coupling factor for environment spins
+
+  Input:
+    N: # of spins
+*/
+void spin_system::Jenv_generate(int N){
+  ofstream Jx_env("Jx_env.txt");
+  ofstream Jy_env("Jy_env.txt");
+  ofstream Jz_env("Jz_env.txt");
+  srand(time(NULL));
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      if (j>=i) {
+        Jx_env<<0<<" ";
+        Jy_env<<0<<" ";
+        Jz_env<<0<<" ";
+      } else {
+        Jx_env<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jy_env<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jz_env<<((double) rand()/RAND_MAX)*2-1<<" ";
+      }
+    }
+    Jx_env<<endl;
+    Jy_env<<endl;
+    Jz_env<<endl;
+  }
+
+
+}
+
+
+
+/*
+  Make J_se txt file randomly between [-1,1]
+  and then multiply with a global interaction factor G,
+  control how strong the system interact with the environment.
+  Input:
+    N: # of spins= N_env+N_sys
+    G: stenght factor
+*/
+  void spin_system::Jse_generate(int N_sys, int N_env, double G){
+    ofstream Jx_se("Jx_se.txt");
+    ofstream Jy_se("Jy_se.txt");
+    ofstream Jz_se("Jz_se.txt");
+    srand(time(NULL));
+    for (int i = 0; i < N_sys; i++) {
+      for (int j = 0; j < N_env; j++) {
+        Jx_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+        Jy_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+        Jz_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+      }
+      Jx_se<<endl;
+      Jy_se<<endl;
+      Jz_se<<endl;
+    }
+  }
+
 
 /* The main process to run the simulation
   16.12.2016: I haven't add the time evolution part. It should be added after.
