@@ -37,6 +37,13 @@ private:
   double* Jx_env;
   double* Jy_env;
   double* Jz_env;
+  double* Jx_se;
+  double* Jy_se;
+  double* Jz_se;
+  double* Jx_com;
+  double* Jy_com;
+  double* Jz_com;
+
   double G;
   double* h_x;
   double* h_y;
@@ -432,14 +439,14 @@ void spin_system::single_spin_op(double t){
 */
 void spin_system::double_spin_op_x(double t){
 
-  // for (int k = 0; k <N ; k++) {
-  //   for (int l = k+1; l < N; l++) {
-  for (int i = 0; i < count_x; i++) {
+  for (int k = 0; k <N ; k++) {
+    for (int l = k+1; l < N; l++) {
+  // for (int i = 0; i < count_x; i++) { //optimize use
+    // int k=Jx_k_marked[i];
+    // int l=Jx_l_marked[i];
 
-    int k=Jx_k_marked[i];
-    int l=Jx_l_marked[i];
       double J=J_x[k+l*N_sys];
-      // if(abs(J)>1e-15){
+      if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -534,8 +541,8 @@ void spin_system::double_spin_op_x(double t){
         }
       }
     }
-  // }
-// }
+  }
+}
 /*
   To operate sigma_y*sigma_y
   Input:
@@ -543,13 +550,13 @@ void spin_system::double_spin_op_x(double t){
 */
 void spin_system::double_spin_op_y(double t){
 
-  // for (int k = 0; k <N ; k++) {
-  //   for (int l = k+1; l < N; l++) {
-  for (int i = 0; i < count_y; i++) {
-    int k=Jy_k_marked[i];
-    int l=Jy_l_marked[i];
+  for (int k = 0; k <N ; k++) {
+    for (int l = k+1; l < N; l++) {
+  // for (int i = 0; i < count_y; i++) {
+    // int k=Jy_k_marked[i];
+    // int l=Jy_l_marked[i];
       double J=J_y[k+l*N_sys];
-      // if(abs(J)>1e-15){
+      if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -646,8 +653,8 @@ void spin_system::double_spin_op_y(double t){
         }
       }
     }
-  // }
-// }
+  }
+}
 
 
 /*
@@ -657,16 +664,16 @@ void spin_system::double_spin_op_y(double t){
 */
 void spin_system::double_spin_op_z(double t){
 
-  // for (int k = 0; k <N ; k++) {
-    // for (int l = k+1; l < N; l++) {
+  for (int k = 0; k <N ; k++) {
+    for (int l = k+1; l < N; l++) {
 
-  for (int i = 0; i < count_z; i++) {
+  // for (int i = 0; i < count_z; i++) {
 
-    int k=Jz_k_marked[i];
-    int l=Jz_l_marked[i];
+    // int k=Jz_k_marked[i];
+    // int l=Jz_l_marked[i];
       double J=J_z[k+l*N_sys];
       // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
-      // if(abs(J)>1e-15){
+      if(abs(J)>1e-15){
 
 
         /* update the double spin Hamiltonian matrix with t.
@@ -757,8 +764,8 @@ void spin_system::double_spin_op_z(double t){
         }
       }
     }
-  // }
-// }
+  }
+}
 
 /*
   calculate energy w/o construct matrix
