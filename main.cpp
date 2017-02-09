@@ -68,7 +68,7 @@ private:
   void double_spin_op_x(double);
   void double_spin_op_y(double);
   void double_spin_op_z(double);
-  void generate_initial_state(char const *);
+  void generate_initial_sys_state(char const *);
   void energy(double);
   double spin(char,int);
 
@@ -89,7 +89,7 @@ public:
   double* H_imaginary;
   double average_energy;
   double average_spin;
-  void Jenv_generate(int);
+  void Jenv_generate(int,double);
   void Jse_generate(int, int, double);
 
 
@@ -98,10 +98,10 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,0,1000,0.1);
+  test.initialize(8,8,200,0.1);
 
 
-  int N=8;
+  int N=16;
   int nofstates=(int) pow(2,N);
 
   // test.initialize(8,0,100.,0.01);
@@ -148,6 +148,7 @@ int main(int argc, char* argv[]){
       Coefficient_out<<0<<endl;
     } else {
     Coefficient_out<<tmp<<endl;
+    cout<<i<<"th= "<<tmp<<endl;
     }
   }
 
@@ -182,9 +183,9 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   Jx_se = new double [N_env*N_sys];
   Jy_se = new double [N_env*N_sys];
   Jz_se = new double [N_env*N_sys];
-  h_x = new double [N_sys];
-  h_y = new double [N_sys];
-  h_z = new double [N_sys];
+  h_x = new double [N];
+  h_y = new double [N];
+  h_z = new double [N];
   h_x_start=1;
   for (int i = 0; i < N_sys*N_sys; i++){
     J_x[i] = 0.;
@@ -201,21 +202,24 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     Jy_se[i] = 0.;
     Jz_se[i] = 0.;
   }
-  for (int i = 0; i < N_sys; i++){
+  for (int i = 0; i < N; i++){
     h_x[i]=0.;
     h_y[i]=0.;
     h_z[i]=0.;
   }
 
-  G=0.5;
+
   read(N_sys*N_sys,J_z,"J2.txt");
   read(N_sys*N_sys,J_x,"J2x.txt");
   read(N_sys*N_sys,J_y,"J2y.txt");
-  read(N_sys,h_z,"h2.txt");
-  Jenv_generate(N_env);
+  read(N,h_z,"h2.txt");
+
+  G=0.000001;
+  Jenv_generate(N_env,G);
+  G=0.0;
   Jse_generate(N_sys,N_env,G);
 
-  environment(8,150);
+  environment(N_env,0.0000000001);
 
   /* initialize the wave function in the ground state
   */
@@ -226,9 +230,8 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-
-  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
-  generate_initial_state("allx");
+  generate_initial_sys_state("allx");
+  generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
@@ -282,7 +285,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
       "1upRan": set spin_0 as up and others are random.
       "allx": as the ground state of sigma_x.
 */
-void spin_system::generate_initial_state(char const * d){
+void spin_system::generate_initial_sys_state(char const * d){
 
 
   if ("read"==d){
@@ -293,7 +296,7 @@ void spin_system::generate_initial_state(char const * d){
   else if ("1upRand"==d) {
     srand (time(NULL));
     double normalize_factor=0.;
-    for (int i = 0; i < nofstates; i++) {
+    for (int i = 0; i < (int) pow(2,N_sys); i++) {
       if(i%2==0){
         psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
         psi_imaginary[i] = (double) rand()/RAND_MAX;
@@ -306,7 +309,7 @@ void spin_system::generate_initial_state(char const * d){
     ofstream Psi_r_out("psi_real.dat");
     ofstream Psi_i_out("psi_imagine.dat");
     normalize_factor = sqrt(normalize_factor);
-    for (int i = 0; i < nofstates; i++) {
+    for (int i = 0; i < (int) pow(2,N_sys); i++) {
       if(i%2==0){
         psi_real[i]      =psi_real[i]/normalize_factor;
         psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
@@ -317,41 +320,16 @@ void spin_system::generate_initial_state(char const * d){
 
   }
   else if ("allx"==d){
-    for (int i = 0; i < nofstates; i++) {
-        psi_real[i]      =pow(nofstates, -0.5);
+    ofstream Psi_r_out("psi_real.dat");
+    ofstream Psi_i_out("psi_imagine.dat");
+    for (int i = 0; i < (int) pow(2,N_sys); i++) {
+        psi_real[i]      =pow((int) pow(2,N_sys), -0.5);
         psi_imaginary[i] =0;
+        Psi_r_out<<psi_real[i]<<endl;
+        Psi_i_out<<psi_imaginary[i]<<endl;
     }
   }
 
-  else if ("try"==d){
-    //I tried to essamble two 4-spins state into a 8-spin computational basis here.
-    //the idea is to direct porduct them.
-    double* t1,*t2,*t3,*t4;
-    t1 = new double [16];
-    t2 = new double [16];
-    t3 = new double [16];
-    t4 = new double [16];
-    read(16,t1,"psi_real.dat");
-    read(16,t2,"psi_imagine.dat");
-    read(16,t3,"psi_real2.dat");
-    read(16,t4,"psi_imagine2.dat");
-    for (int i = 0; i < 16; i++) {
-      cout<<t1[i]<<" "<<t2[i]<<" "<<t3[i]<<" "<<t4[i]<<" "<<endl;
-    }
-
-    double *tall;
-    tall=new double [256];
-    // ofstream try_out("try.dat");
-    for (int i = 0; i < 16; i++) {
-      for (int j = 0; j < 16; j++) {
-        tall[i*16+j]=t1[i]*t3[j]-t2[i]*t4[j];
-        // try_out<<tall[i*16+j]<<endl;
-      }
-    }
-
-    cout<<"Enter try"<<endl;
-
-  }
   else {
     cout<<endl<<"Wrong Parameter for function: generate_initial_state(char)"<<endl;
     cout<<"!!!BE AWARE of the correctness of the result!!!"<<endl<<endl;
@@ -367,7 +345,7 @@ void spin_system::generate_initial_state(char const * d){
 void spin_system::single_spin_op(double t){
 
 
-  for (int k = 0; k < N_sys; k++) {
+  for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
 
     /* update the single spin Hamiltonian matrix with t.
@@ -376,8 +354,12 @@ void spin_system::single_spin_op(double t){
     */
     double norm=0;
     //set the initial transverse field
+    if (k<N_sys) {
+      norm=sqrt((Gamma*h_x_start+Delta*h_x[k])*(Gamma*h_x_start+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
+    } else {
+      norm=0.;
+    }
 
-    norm=sqrt((Gamma*h_x_start+Delta*h_x[k])*(Gamma*h_x_start+Delta*h_x[k])+Delta*h_y[k]*Delta*h_y[k]+Delta*h_z[k]*Delta*h_z[k]);
 
 
     if (norm-0<1e-14) {
@@ -460,8 +442,6 @@ void spin_system::double_spin_op_x(double t){
   // for (int i = 0; i < count_x; i++) { //optimize use
     // int k=Jx_k_marked[i];
     // int l=Jx_l_marked[i];
-
-
       if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
@@ -565,13 +545,20 @@ void spin_system::double_spin_op_x(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_y(double t){
-
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
+      double J=0.;
+      if (k>=N_sys) {
+        J=Jy_env[(k-N_sys)+(l-N_sys)*N_env];
+      } else if(l>=N_sys && k<N_sys) {
+        J=Jy_se[k+(l-N_sys)*N_sys];
+      } else {
+        J=J_y[k+l*N_sys];
+      }
+
   // for (int i = 0; i < count_y; i++) {
     // int k=Jy_k_marked[i];
     // int l=Jy_l_marked[i];
-      double J=J_y[k+l*N_sys];
       if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
@@ -580,8 +567,8 @@ void spin_system::double_spin_op_y(double t){
         */
 
         double a=0;//J_z[k+l*N]/1.;//4.;
-        double b=-J_y[k+l*N_sys];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
-        double c=J_y[k+l*N_sys];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+        double b=-J;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+        double c=J;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
@@ -679,16 +666,23 @@ void spin_system::double_spin_op_y(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_z(double t){
-
+  int ch=0;
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
-
+      double J=0.;
+      if (k>=N_sys) {
+        J=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
+        ch=1;
+      } else if(l>=N_sys && k<N_sys) {
+        J=Jz_se[k+(l-N_sys)*N_sys];
+        ch=2;
+      } else {
+        J=J_z[k+l*N_sys];
+        ch=3;
+      }
   // for (int i = 0; i < count_z; i++) {
-
     // int k=Jz_k_marked[i];
     // int l=Jz_l_marked[i];
-      double J=J_z[k+l*N_sys];
-      // if((J==0)) cout<<" equal ZERO!! "<<k<<" "<<l<<endl;
       if(abs(J)>1e-15){
 
 
@@ -697,7 +691,7 @@ void spin_system::double_spin_op_z(double t){
           because of reading convenience I didn't do so.
         */
 
-        double a=J_z[k+l*N_sys]/1.;//4.;
+        double a=J/1.;//4.;
         double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
@@ -736,7 +730,10 @@ void spin_system::double_spin_op_z(double t){
           n1=n0+nii;
           n2=n0+njj;
           n3=n1+njj;
-
+          /////////checking!!!////////////
+          // if(3==ch)
+            // cout<<"k, l, n0, n1, n2, n3 = "<<k<<", "<<l<<", "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
+          /////////checking!!!////////////
                   /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
           */
@@ -1063,15 +1060,16 @@ void spin_system::environment(int N, double Temperature){
   int info;
   zhpevx("Vector","All","Upper", &n, ap, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
   double sum=0.;
+  // cout<<w[0]<<endl;
   for (int i = 1; i < nofstates; i++) {
-    // cout<<(w[i]-w[0])<<endl;
+    // cout<<w[i]<<endl;
     w[i]=exp(-1*(w[i]-w[0])/(Temperature*Boltzmann_const));
     sum+=w[i];
   }
   w[0]=1;//exp(-1*(w[0]-w[0])/(Temperature*Boltzmann_const));
   sum+=w[0];
   cout<<"sum of z: "<<sum<<endl;
-  for (int i = 1; i < nofstates; i++) {
+  for (int i = 0; i < nofstates; i++) {
     w[i]=w[i]/sum;
   }
   ofstream envr_out("env_real.dat");
@@ -1095,32 +1093,26 @@ void spin_system::environment(int N, double Temperature){
     char const*: the basis state of the environment
 */
 void spin_system::generate(int N, double* array_real, double* array_imagine, char const* filename_sysr, char const* filename_sysi, char const* filename_envr, char const* filename_envi ){
-  // ifstream sysr_state;
-  // ifstream envr_state;
-  // ifstream sysi_state;
-  // ifstream envi_state;
-  //
-  // sysr_state.open(filename_sysr);
-  // envr_state.open(filename_envr);
-  // sysi_state.open(filename_sysi);
-  // envi_state.open(filename_envi);
-  double *sys_real, *sys_imag, *env_real, *env_imag;
-  int N_half=(int) pow(2,N/2);
-  sys_real=new double[N_half];
-  sys_imag=new double[N_half];
-  env_real=new double[N_half];
-  env_imag=new double[N_half];
-  read(N_half, sys_real, filename_sysr);
-  read(N_half, sys_imag, filename_sysi);
-  read(N_half, env_real, filename_envr);
-  read(N_half, env_imag, filename_envi);
 
-  // ofstream state_out("state_complete.dat");
-  for (int i = 0; i < N_half; i++) {
-    for (int j = 0; j < N_half; j++) {
-      array_real[i*N_half+j]=sys_real[i]*env_real[j]-sys_imag[i]*env_imag[j];
-      array_imagine[i*N_half+j]=sys_real[i]*env_imag[j]+sys_imag[i]*env_real[j];
-      // state_out<<array_real[i*N_half+j]<<" "<<array_imagine[i*N_half+j]<<endl;
+  double *sys_real, *sys_imag, *env_real, *env_imag;
+  // int N_half=(int) pow(2,N/2);
+  int nos_sys=(int) pow(2,N_sys);
+  int nos_env=(int) pow(2,N_env);
+  sys_real=new double[nos_sys];
+  sys_imag=new double[nos_sys];
+  env_real=new double[nos_env];
+  env_imag=new double[nos_env];
+  read(nos_sys, sys_real, filename_sysr);
+  read(nos_sys, sys_imag, filename_sysi);
+  read(nos_env, env_real, filename_envr);
+  read(nos_env, env_imag, filename_envi);
+
+  ofstream state_out("state_complete.dat");
+  for (int i = 0; i < nos_env; i++) {
+    for (int j = 0; j < nos_sys; j++) {
+      array_real[i*nos_sys+j]=env_real[i]*sys_real[j]-env_imag[i]*sys_imag[j];
+      array_imagine[i*nos_sys+j]=env_imag[i]*sys_real[j]+env_real[i]*sys_imag[j];
+      state_out<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
     }
   }
 }
@@ -1131,8 +1123,9 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
 
   Input:
     N: # of spins
+    G: strength
 */
-void spin_system::Jenv_generate(int N){
+void spin_system::Jenv_generate(int N, double G){
   ofstream Jx_env_out("Jx_env.txt");
   ofstream Jy_env_out("Jy_env.txt");
   ofstream Jz_env_out("Jz_env.txt");
@@ -1144,9 +1137,9 @@ void spin_system::Jenv_generate(int N){
         Jy_env_out<<0<<" ";
         Jz_env_out<<0<<" ";
       } else {
-        Jx_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
-        Jy_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
-        Jz_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jx_env_out<<G*(((double) rand()/RAND_MAX)*2-1)<<" ";
+        Jy_env_out<<G*(((double) rand()/RAND_MAX)*2-1)<<" ";
+        Jz_env_out<<G*(((double) rand()/RAND_MAX)*2-1)<<" ";
       }
     }
     Jx_env_out<<endl;
