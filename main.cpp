@@ -98,7 +98,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,100,0.1);
+  test.initialize(8,0,1000,0.1);
 
 
   int N=8;
@@ -179,6 +179,9 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   Jx_env = new double [N_env*N_env];
   Jy_env = new double [N_env*N_env];
   Jz_env = new double [N_env*N_env];
+  Jx_se = new double [N_env*N_sys];
+  Jy_se = new double [N_env*N_sys];
+  Jz_se = new double [N_env*N_sys];
   h_x = new double [N_sys];
   h_y = new double [N_sys];
   h_z = new double [N_sys];
@@ -193,7 +196,11 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     Jy_env[i] = 0.;
     Jz_env[i] = 0.;
   }
-
+  for (int i = 0; i < N_env*N_sys; i++){
+    Jx_se[i] = 0.;
+    Jy_se[i] = 0.;
+    Jz_se[i] = 0.;
+  }
   for (int i = 0; i < N_sys; i++){
     h_x[i]=0.;
     h_y[i]=0.;
@@ -359,6 +366,7 @@ void spin_system::generate_initial_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
+
   for (int k = 0; k < N_sys; k++) {
     int i1=(int) pow(2,k);
 
@@ -441,11 +449,19 @@ void spin_system::double_spin_op_x(double t){
 
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
+      double J=0.;
+      if (k>=N_sys) {
+        J=Jx_env[(k-N_sys)+(l-N_sys)*N_env];
+      } else if(l>=N_sys && k<N_sys) {
+        J=Jx_se[k+(l-N_sys)*N_sys];
+      } else {
+        J=J_x[k+l*N_sys];
+      }
   // for (int i = 0; i < count_x; i++) { //optimize use
     // int k=Jx_k_marked[i];
     // int l=Jx_l_marked[i];
 
-      double J=J_x[k+l*N_sys];
+
       if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
@@ -454,8 +470,8 @@ void spin_system::double_spin_op_x(double t){
         */
 
         double a=0;//J_z[k+l*N]/1.;//4.;
-        double b=J_x[k+l*N_sys];//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
-        double c=J_x[k+l*N_sys];//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
+        double b=J;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
+        double c=J;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
         double b_block=b*Delta*tau*0.5;
         double c_block=c*Delta*tau*0.5;
@@ -969,9 +985,7 @@ void spin_system::read(int N, double* Array, char const * filename ){
 */
 void spin_system::environment(int N, double Temperature){
 
-  read(N*N,Jx_env,"Jx_env.txt");
-  read(N*N,Jy_env,"Jy_env.txt");
-  read(N*N,Jz_env,"Jz_env.txt");
+
   //Construct the H_env matrix for the later use for solving energy of the heat bath
   double Boltzmann_const= 1;//we use 1 here insted of 0.000086173303 ev/K;
   int nofstates=(int) pow(2,N);
@@ -1119,26 +1133,29 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
     N: # of spins
 */
 void spin_system::Jenv_generate(int N){
-  ofstream Jx_env("Jx_env.txt");
-  ofstream Jy_env("Jy_env.txt");
-  ofstream Jz_env("Jz_env.txt");
+  ofstream Jx_env_out("Jx_env.txt");
+  ofstream Jy_env_out("Jy_env.txt");
+  ofstream Jz_env_out("Jz_env.txt");
   srand(time(NULL));
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       if (j>=i) {
-        Jx_env<<0<<" ";
-        Jy_env<<0<<" ";
-        Jz_env<<0<<" ";
+        Jx_env_out<<0<<" ";
+        Jy_env_out<<0<<" ";
+        Jz_env_out<<0<<" ";
       } else {
-        Jx_env<<((double) rand()/RAND_MAX)*2-1<<" ";
-        Jy_env<<((double) rand()/RAND_MAX)*2-1<<" ";
-        Jz_env<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jx_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jy_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
+        Jz_env_out<<((double) rand()/RAND_MAX)*2-1<<" ";
       }
     }
-    Jx_env<<endl;
-    Jy_env<<endl;
-    Jz_env<<endl;
+    Jx_env_out<<endl;
+    Jy_env_out<<endl;
+    Jz_env_out<<endl;
   }
+  read(N*N,Jx_env,"Jx_env.txt");
+  read(N*N,Jy_env,"Jy_env.txt");
+  read(N*N,Jz_env,"Jz_env.txt");
 
 
 }
@@ -1154,20 +1171,23 @@ void spin_system::Jenv_generate(int N){
     G: stenght factor
 */
   void spin_system::Jse_generate(int N_sys, int N_env, double G){
-    ofstream Jx_se("Jx_se.txt");
-    ofstream Jy_se("Jy_se.txt");
-    ofstream Jz_se("Jz_se.txt");
+    ofstream Jx_se_out("Jx_se.txt");
+    ofstream Jy_se_out("Jy_se.txt");
+    ofstream Jz_se_out("Jz_se.txt");
     srand(time(NULL));
     for (int i = 0; i < N_sys; i++) {
       for (int j = 0; j < N_env; j++) {
-        Jx_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
-        Jy_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
-        Jz_se<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+        Jx_se_out<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+        Jy_se_out<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
+        Jz_se_out<<(((double) rand()/RAND_MAX)*2-1)*G <<" ";
       }
-      Jx_se<<endl;
-      Jy_se<<endl;
-      Jz_se<<endl;
+      Jx_se_out<<endl;
+      Jy_se_out<<endl;
+      Jz_se_out<<endl;
     }
+    read(N_sys*N_env,Jx_se,"Jx_se.txt");
+    read(N_sys*N_env,Jy_se,"Jy_se.txt");
+    read(N_sys*N_env,Jz_se,"Jz_se.txt");
   }
 
 
