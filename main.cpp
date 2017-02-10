@@ -98,7 +98,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,200,0.1);
+  test.initialize(8,8,3000,0.1);
 
 
   int N=16;
@@ -142,15 +142,36 @@ int main(int argc, char* argv[]){
   cout<<"location after run = "<<location<<endl;
 
   ofstream Coefficient_out("coefficient.dat");
+  double sum_GS=0.;
+  double sum_ES=0.;
   for (int i = 0; i < nofstates; i++) {
     double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-    if(tmp<1e-3){
+    if(tmp<1e-8){
       Coefficient_out<<0<<endl;
+      sum_ES+=tmp;
     } else {
-    Coefficient_out<<tmp<<endl;
-    cout<<i<<"th= "<<tmp<<endl;
+      if (0==(i-176)%256) {
+        Coefficient_out<<tmp<<endl;
+        cout<<(i-176)%256<<"th GS= "<<tmp<<endl;
+        sum_GS+=tmp;
+      } else {
+        Coefficient_out<<tmp<<endl;
+        cout<<i<<"th= "<<tmp<<endl;
+        sum_ES+=tmp;
+      }
+
     }
   }
+
+  cout<<endl;
+  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  cout<<"costed me "<<time<<" second in real time"<<endl;
+  cout<<"norm after run = "<<norm<<endl;
+  cout<<"max after run = "<<max<<endl;
+  cout<<"location after run = "<<location<<endl;
+  cout<<endl;
+  cout<<"pobability of GS: "<<sum_GS<<endl;
+  cout<<"pobability of non-GS: "<<sum_ES<<endl;
 
   cout<<"reutrn "<<0<<endl;
   return 0;
@@ -214,12 +235,12 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N_sys*N_sys,J_y,"J2y.txt");
   read(N,h_z,"h2.txt");
 
-  G=0.000001;
+  G=0.05;
   Jenv_generate(N_env,G);
   G=0.0;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.0000000001);
+  environment(N_env,0.00000001);
 
   /* initialize the wave function in the ground state
   */
