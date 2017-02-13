@@ -1,4 +1,5 @@
 //#include "spinsys.h"
+#include <omp.h>
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -98,7 +99,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,300,0.1);
+  test.initialize(8,8,100,0.1);
 
 
   int N=16;
@@ -245,7 +246,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
   G=1.0;
   Jenv_generate(N_env,G);
-  G=0.05;
+  G=0.0;
   Jse_generate(N_sys,N_env,G);
 
   environment(N_env,0.00001);
@@ -373,7 +374,7 @@ void spin_system::generate_initial_sys_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
-
+  #pragma omp parallel for
   for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
 
@@ -457,7 +458,7 @@ void spin_system::single_spin_op(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_x(double t){
-
+  #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -574,6 +575,7 @@ void spin_system::double_spin_op_x(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_y(double t){
+  #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -695,7 +697,9 @@ void spin_system::double_spin_op_y(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_z(double t){
+
   int ch=0;
+  #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
