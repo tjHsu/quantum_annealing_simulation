@@ -1,5 +1,6 @@
 //#include "spinsys.h"
-#include <omp.h>
+
+
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -12,11 +13,13 @@
 #include <complex>
 #include <cmath>
 #include <time.h>
+
 // #define Boltzmann_const 0.000086173303 //m2 kg s-2 K-1
 
 using namespace std;
 #define MKL_Complex16 complex<double>
 #include "mkl.h"
+#include "omp.h"
 class spin_system {
 private:
   int N;
@@ -99,7 +102,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,100,0.1);
+  test.initialize(8,8,500,0.1);
 
 
   int N=16;
@@ -374,7 +377,7 @@ void spin_system::generate_initial_sys_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
 
@@ -458,7 +461,7 @@ void spin_system::single_spin_op(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_x(double t){
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -575,7 +578,7 @@ void spin_system::double_spin_op_x(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_y(double t){
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -699,7 +702,7 @@ void spin_system::double_spin_op_y(double t){
 void spin_system::double_spin_op_z(double t){
 
   int ch=0;
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
