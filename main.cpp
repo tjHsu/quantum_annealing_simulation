@@ -98,7 +98,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,3000,0.1);
+  test.initialize(8,8,300,0.1);
 
 
   int N=16;
@@ -152,11 +152,12 @@ int main(int argc, char* argv[]){
     } else {
       if (0==(i-176)%256) {
         Coefficient_out<<tmp<<endl;
-        cout<<(i-176)%256<<"th GS= "<<tmp<<endl;
+        // cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
         sum_GS+=tmp;
       } else {
         Coefficient_out<<tmp<<endl;
-        cout<<i<<"th= "<<tmp<<endl;
+        if (tmp>1e-2)
+          cout<<i<<"th= "<<tmp<<endl;
         sum_ES+=tmp;
       }
 
@@ -172,6 +173,7 @@ int main(int argc, char* argv[]){
   cout<<endl;
   cout<<"pobability of GS: "<<sum_GS<<endl;
   cout<<"pobability of non-GS: "<<sum_ES<<endl;
+  cout<<"sum of two"<<sum_ES+sum_GS<<endl;
 
   cout<<"reutrn "<<0<<endl;
   return 0;
@@ -233,14 +235,20 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N_sys*N_sys,J_z,"J2.txt");
   read(N_sys*N_sys,J_x,"J2x.txt");
   read(N_sys*N_sys,J_y,"J2y.txt");
+  read(N_env*N_env,Jx_env,"Jx_env.txt");
+  read(N_env*N_env,Jy_env,"Jy_env.txt");
+  read(N_env*N_env,Jz_env,"Jz_env.txt");
+  read(N_sys*N_env,Jx_se,"Jx_se.txt");
+  read(N_sys*N_env,Jy_se,"Jy_se.txt");
+  read(N_sys*N_env,Jz_se,"Jz_se.txt");
   read(N,h_z,"h2.txt");
 
-  G=0.05;
+  G=1.0;
   Jenv_generate(N_env,G);
-  G=0.0;
+  G=0.05;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.00000001);
+  environment(N_env,0.00001);
 
   /* initialize the wave function in the ground state
   */
@@ -1093,6 +1101,11 @@ void spin_system::environment(int N, double Temperature){
   for (int i = 0; i < nofstates; i++) {
     w[i]=w[i]/sum;
   }
+  sum=0;
+  for (int i = 0; i < nofstates; i++) {
+    sum+=w[i];
+  }
+  cout<<"inside function Environment: "<<sum<<endl;
   ofstream envr_out("env_real.dat");
   ofstream envi_out("env_imag.dat");
   for (int i = 0; i < nofstates; i++) {
@@ -1136,8 +1149,13 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
       state_out<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
     }
   }
+  double sum=0;
+  int nos=(int) pow(2,N_sys+N_env);
+  for (int i = 0; i < nos; i++) {
+    sum+=array_real[i]*array_real[i]+array_imagine[i]*array_imagine[i];
+  }
+  cout<<"sum inside generate functoin: "<<sum<<endl;
 }
-
 /*
   Make J_env txt file randomly between [-1,1]
   It is the coupling factor for environment spins
