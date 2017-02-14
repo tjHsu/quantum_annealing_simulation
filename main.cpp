@@ -18,8 +18,9 @@
 
 using namespace std;
 #define MKL_Complex16 complex<double>
-#include "mkl.h"
 #include "omp.h"
+#include "mkl.h"
+
 class spin_system {
 private:
   int N;
@@ -102,7 +103,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,500,0.1);
+  test.initialize(8,8,100,0.1);
 
 
   int N=16;
@@ -247,12 +248,12 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N_sys*N_env,Jz_se,"Jz_se.txt");
   read(N,h_z,"h2.txt");
 
-  G=1.0;
-  Jenv_generate(N_env,G);
+  // G=1.0;
+  // Jenv_generate(N_env,G);
   G=0.0;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.00001);
+  // environment(N_env,0.00001);
 
   /* initialize the wave function in the ground state
   */
@@ -513,7 +514,7 @@ void spin_system::double_spin_op_x(double t){
 
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
-
+        #pragma omp parallel for default(none) shared(nii,njj)
         for (int m = 0; m < nofstates; m+=4) {
           /* get index for the second place we need to operate ss_operator on.
             this is a copy from the previous code.
@@ -633,7 +634,7 @@ void spin_system::double_spin_op_y(double t){
 
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
-
+        #pragma omp parallel for default(none) shared(nii,njj)
         for (int m = 0; m < nofstates; m+=4) {
           /* get index for the second place we need to operate ss_operator on.
             this is a copy from the previous code.
@@ -701,20 +702,16 @@ void spin_system::double_spin_op_y(double t){
 */
 void spin_system::double_spin_op_z(double t){
 
-  int ch=0;
-  // #pragma omp parallel for
+  // #pragma omp parallel for default(none)
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
       if (k>=N_sys) {
         J=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
-        ch=1;
       } else if(l>=N_sys && k<N_sys) {
         J=Jz_se[k+(l-N_sys)*N_sys];
-        ch=2;
       } else {
         J=J_z[k+l*N_sys];
-        ch=3;
       }
   // for (int i = 0; i < count_z; i++) {
     // int k=Jz_k_marked[i];
@@ -753,7 +750,7 @@ void spin_system::double_spin_op_z(double t){
 
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
-
+        #pragma omp parallel for default(none) shared(nii,njj)
         for (int m = 0; m < nofstates; m+=4) {
           /* get index for the second place we need to operate ss_operator on.
             this is a copy from the previous code.
