@@ -253,7 +253,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   G=0.0;
   Jse_generate(N_sys,N_env,G);
 
-  // environment(N_env,0.00001);
+  environment(N_env,0.00001);
 
   /* initialize the wave function in the ground state
   */
@@ -419,6 +419,7 @@ void spin_system::single_spin_op(double t){
       ss_operator_imaginary[2] = (Gamma*h_x_start+Delta*h_x[k])*b;//sin(tau*0.5*norm)/norm;
       ss_operator_imaginary[3] = -1*Delta*h_z[k]*b;//sin(tau*0.5*norm)/norm;
     }
+    #pragma omp parallel for default(none) shared(i1)
     for (int l = 0; l < nofstates; l+=2) {
       /* get index for the second place we need to operate ss_operator on.
         this is a copy from the previous code.
@@ -1021,6 +1022,9 @@ void spin_system::environment(int N, double Temperature){
   int nofstates=(int) pow(2,N);
   double* H_env;
   H_env=new double[nofstates*(nofstates+1)/2];
+  for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+    H_env[i]=0;
+  }
   /* // Since I don't set single spin magnetization for environment, I comment this part now
   for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
@@ -1082,8 +1086,13 @@ void spin_system::environment(int N, double Temperature){
   double abstol = 2*DLAMCH("S");
   int m;
   complex<double> ap[nofstates*(nofstates+1)/2];
-  for (int i = 0; i < nofstates*(nofstates+1)/2; i++)
+  ofstream check_out("check_out2");
+  for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
     ap[i]=H_env[i];
+    check_out<<ap[i]<<endl;
+  }
+
+
   complex<double> z[nofstates*nofstates];
   int lda = nofstates;
   complex<double> work[2*nofstates];
@@ -1092,6 +1101,9 @@ void spin_system::environment(int N, double Temperature){
   int ifail[nofstates];
   int info;
   zhpevx("Vector","All","Upper", &n, ap, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
+  if(info!=0){
+    cout<<"info = "<<info<<endl;
+  }
   double sum=0.;
   // cout<<w[0]<<endl;
   for (int i = 1; i < nofstates; i++) {
