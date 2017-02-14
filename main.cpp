@@ -169,12 +169,12 @@ int main(int argc, char* argv[]){
     }
   }
 
-  cout<<endl;
-  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  cout<<"costed me "<<time<<" second in real time"<<endl;
-  cout<<"norm after run = "<<norm<<endl;
-  cout<<"max after run = "<<max<<endl;
-  cout<<"location after run = "<<location<<endl;
+  // cout<<endl;
+  // cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  // cout<<"costed me "<<time<<" second in real time"<<endl;
+  // cout<<"norm after run = "<<norm<<endl;
+  // cout<<"max after run = "<<max<<endl;
+  // cout<<"location after run = "<<location<<endl;
   cout<<endl;
   cout<<"pobability of GS: "<<sum_GS<<endl;
   cout<<"pobability of non-GS: "<<sum_ES<<endl;
@@ -378,7 +378,6 @@ void spin_system::generate_initial_sys_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
-  // #pragma omp parallel for
   for (int k = 0; k < N; k++) {
     int i1=(int) pow(2,k);
 
@@ -445,7 +444,6 @@ void spin_system::single_spin_op(double t){
                       - ss_operator_imaginary[2]*psi_imaginary[i] - ss_operator_imaginary[3]*psi_imaginary[j];
       psi_imaginary_temp_j = ss_operator_real[2]*psi_imaginary[i] + ss_operator_real[3]*psi_imaginary[j]
                          + ss_operator_imaginary[2]*psi_real[i] + ss_operator_imaginary[3]*psi_real[j];
-
       psi_real[i]       = psi_real_temp_i;
       psi_imaginary[i]  = psi_imaginary_temp_i;
       psi_real[j]       = psi_real_temp_j;
@@ -463,7 +461,6 @@ void spin_system::single_spin_op(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_x(double t){
-  // #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -529,6 +526,7 @@ void spin_system::double_spin_op_x(double t){
           n2=n0+njj;
           n3=n1+njj;
 
+
           /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
           */
@@ -580,7 +578,6 @@ void spin_system::double_spin_op_x(double t){
     t: the current time point
 */
 void spin_system::double_spin_op_y(double t){
-  // #pragma omp parallel for
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -703,7 +700,6 @@ void spin_system::double_spin_op_y(double t){
 */
 void spin_system::double_spin_op_z(double t){
 
-  // #pragma omp parallel for default(none)
   for (int k = 0; k <N ; k++) {
     for (int l = k+1; l < N; l++) {
       double J=0.;
@@ -753,6 +749,8 @@ void spin_system::double_spin_op_z(double t){
         int njj=(int) pow(2,l);
         #pragma omp parallel for default(none) shared(nii,njj)
         for (int m = 0; m < nofstates; m+=4) {
+
+
           /* get index for the second place we need to operate ss_operator on.
             this is a copy from the previous code.
             need to be moderated more properly without divde operator.
@@ -765,8 +763,9 @@ void spin_system::double_spin_op_z(double t){
           n2=n0+njj;
           n3=n1+njj;
           /////////checking!!!////////////
+          int tid=omp_get_thread_num();
           // if(3==ch)
-            // cout<<"k, l, n0, n1, n2, n3 = "<<k<<", "<<l<<", "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
+          cout<<"tid = "<<tid<<", n0, n1, n2, n3 = "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
           /////////checking!!!////////////
                   /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
