@@ -103,7 +103,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,100,0.1);
+  test.initialize(8,8,1000,0.1);
 
 
   int N=16;
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]){
   cout<<endl;
   cout<<"pobability of GS: "<<sum_GS<<endl;
   cout<<"pobability of non-GS: "<<sum_ES<<endl;
-  cout<<"sum of two"<<sum_ES+sum_GS<<endl;
+  // cout<<"sum of two"<<sum_ES+sum_GS<<endl;
 
   cout<<"reutrn "<<0<<endl;
   return 0;
@@ -765,7 +765,7 @@ void spin_system::double_spin_op_z(double t){
           /////////checking!!!////////////
           int tid=omp_get_thread_num();
           // if(3==ch)
-          cout<<"tid = "<<tid<<", n0, n1, n2, n3 = "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
+          // cout<<"tid = "<<tid<<", n0, n1, n2, n3 = "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
           /////////checking!!!////////////
                   /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
@@ -1120,7 +1120,7 @@ void spin_system::environment(int N, double Temperature){
   for (int i = 0; i < nofstates; i++) {
     sum+=w[i];
   }
-  cout<<"inside function Environment: "<<sum<<endl;
+  // cout<<"inside function Environment: "<<sum<<endl;
   ofstream envr_out("env_real.dat");
   ofstream envi_out("env_imag.dat");
   for (int i = 0; i < nofstates; i++) {
@@ -1169,7 +1169,7 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
   for (int i = 0; i < nos; i++) {
     sum+=array_real[i]*array_real[i]+array_imagine[i]*array_imagine[i];
   }
-  cout<<"sum inside generate functoin: "<<sum<<endl;
+  // cout<<"sum inside generate functoin: "<<sum<<endl;
 }
 /*
   Make J_env txt file randomly between [-1,1]
