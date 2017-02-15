@@ -76,6 +76,7 @@ private:
   void generate_initial_sys_state(char const *);
   void energy(double);
   double spin(char,int);
+  void spin_allinone();
 
   void read(int,double*,char const *);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
@@ -92,6 +93,7 @@ public:
   double* psi_tmp_imaginary;
   double* H_real;
   double* H_imaginary;
+  double* spin_return;
   double average_energy;
   double average_spin;
   void Jenv_generate(int,double);
@@ -103,7 +105,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,1000,0.1);
+  test.initialize(8,8,100,0.1);
 
 
   int N=16;
@@ -214,7 +216,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   h_x = new double [N];
   h_y = new double [N];
   h_z = new double [N];
-  h_x_start=1;
+    h_x_start=1;
   for (int i = 0; i < N_sys*N_sys; i++){
     J_x[i] = 0.;
     J_y[i] = 0.;
@@ -234,6 +236,10 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     h_x[i]=0.;
     h_y[i]=0.;
     h_z[i]=0.;
+  }
+  spin_return = new double [N*3];//3 state for x,y,z
+  for (int i = 0; i < N*3; i++){
+    spin_return[i]=0;
   }
 
 
@@ -378,7 +384,7 @@ void spin_system::generate_initial_sys_state(char const * d){
 */
 void spin_system::single_spin_op(double t){
 
-  for (int k = 0; k < N; k++) {
+  for (int k = 0; k < N_sys; k++) {
     int i1=(int) pow(2,k);
 
     /* update the single spin Hamiltonian matrix with t.
@@ -469,7 +475,7 @@ void spin_system::double_spin_op_x(double t){
       } else if(l>=N_sys && k<N_sys) {
         J=Jx_se[k+(l-N_sys)*N_sys];
       } else {
-        J=J_x[k+l*N_sys];
+        J=Delta*J_x[k+l*N_sys];
       }
   // for (int i = 0; i < count_x; i++) { //optimize use
     // int k=Jx_k_marked[i];
@@ -485,8 +491,8 @@ void spin_system::double_spin_op_x(double t){
         double b=J;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=J;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
-        double b_block=b*Delta*tau*0.5;
-        double c_block=c*Delta*tau*0.5;
+        double b_block=b*tau*0.5;
+        double c_block=c*tau*0.5;
 
         double cos_b_block=cos(b_block);
         double cos_c_block=cos(c_block);
@@ -586,7 +592,7 @@ void spin_system::double_spin_op_y(double t){
       } else if(l>=N_sys && k<N_sys) {
         J=Jy_se[k+(l-N_sys)*N_sys];
       } else {
-        J=J_y[k+l*N_sys];
+        J=Delta*J_y[k+l*N_sys];
       }
 
   // for (int i = 0; i < count_y; i++) {
@@ -603,8 +609,8 @@ void spin_system::double_spin_op_y(double t){
         double b=-J;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=J;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
-        double b_block=b*Delta*tau*0.5;
-        double c_block=c*Delta*tau*0.5;
+        double b_block=b*tau*0.5;
+        double c_block=c*tau*0.5;
 
         double cos_b_block=cos(b_block);
         double cos_c_block=cos(c_block);
@@ -708,7 +714,7 @@ void spin_system::double_spin_op_z(double t){
       } else if(l>=N_sys && k<N_sys) {
         J=Jz_se[k+(l-N_sys)*N_sys];
       } else {
-        J=J_z[k+l*N_sys];
+        J=Delta*J_z[k+l*N_sys];
       }
   // for (int i = 0; i < count_z; i++) {
     // int k=Jz_k_marked[i];
@@ -725,7 +731,7 @@ void spin_system::double_spin_op_z(double t){
         double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
-        double a_block=a*Delta*tau;
+        double a_block=a*tau;
         double cos_a_block=cos(a_block);
         double sin_a_block=sin(a_block);
         ds_operator_real[0]      = cos_a_block;//cos( a*Delta*tau)*cos(b*Delta*tau);
@@ -763,7 +769,7 @@ void spin_system::double_spin_op_z(double t){
           n2=n0+njj;
           n3=n1+njj;
           /////////checking!!!////////////
-          int tid=omp_get_thread_num();
+          // int tid=omp_get_thread_num();
           // if(3==ch)
           // cout<<"tid = "<<tid<<", n0, n1, n2, n3 = "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
           /////////checking!!!////////////
@@ -831,6 +837,7 @@ void spin_system::energy(double t){
   for (int k = 0; k < N_sys; k++) {
     int i1=(int) pow(2,k);
     double hz=-1*h_z[k];
+    #pragma omp parallel for default(none) shared(i1,hx,hz)
     for (int l = 0; l < nofstates; l+=2) {
       int i2= l & i1;
       int i = l -i2+i2/i1;
@@ -857,6 +864,7 @@ void spin_system::energy(double t){
       if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
+        #pragma omp parallel for default(none) shared(nii,njj,Jx,Jy,Jz)
         for (int m = 0; m < nofstates; m+=4) {
           int n3 = m & njj;
           int n2 = m-n3+(n3+n3)/njj;
@@ -921,13 +929,15 @@ double spin_system::spin(char d,int which_spin){
   average_spin=0.;
   double check_img=0.;
 
-  for (int k = 0; k < N_sys; k++) {
+  for (int k = 0; k < N; k++) {
     if (k==which_spin) {
       int i1=(int) pow(2,k);
+      #pragma omp parallel for default(none) shared(i1,d,std::cout)
       for (int l = 0; l < nofstates; l+=2) {
         int i2= l & i1;
         int i = l -i2+i2/i1;
         int j = i+i1;
+
         if(d=='x'){
           /*sigma_x*/
           psi_tmp_real[i]     += 0.5*psi_real[j];
@@ -943,16 +953,16 @@ double spin_system::spin(char d,int which_spin){
           psi_tmp_imaginary[j]+= 0.5*psi_real[i];
         }
         else if(d=='z'){
-          /*sigma_z*/
-          psi_tmp_real[i]     += 0.5*psi_real[i];
-          psi_tmp_imaginary[i]+= 0.5*psi_imaginary[i];
-          psi_tmp_real[j]     += -0.5*psi_real[j];
-          psi_tmp_imaginary[j]+= -0.5*psi_imaginary[j];
-        }
+         /*sigma_z*/
+         psi_tmp_real[i]     += 0.5*psi_real[i];
+         psi_tmp_imaginary[i]+= 0.5*psi_imaginary[i];
+         psi_tmp_real[j]     += -0.5*psi_real[j];
+         psi_tmp_imaginary[j]+= -0.5*psi_imaginary[j];
+       }
+
         else {
           cout<<"WRONG input for calculating average spin"<<endl;
         }
-
       }
     }
   }
@@ -960,6 +970,10 @@ double spin_system::spin(char d,int which_spin){
   for (int i = 0; i < nofstates; ++i) {
     // cout<<2++1*3<<endl;
     average_spin += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
+    // if (which_spin>=N_sys && (d=='x'||d=='y'||d=='z')) {
+    //  cout<<which_spin<<": "<<d<<": "<<i<<": "<<average_spin<<endl;
+    // }
+
     check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
   }
 
@@ -969,6 +983,68 @@ double spin_system::spin(char d,int which_spin){
 
 
 }
+
+/*
+  calculate the average spin in one shot. can reduce the computing time.
+  Input:
+  Output:
+    change the array spin_return[]
+*/
+void spin_system::spin_allinone(){
+  for (int i = 0; i < N*3; i++){
+    spin_return[i]=0;
+  }
+
+
+
+  double check_img=0.;
+  for (int k = 0; k < N; k++) {
+    double* psi_tmp_x_real=new double [nofstates]();
+    double* psi_tmp_x_imaginary=new double [nofstates]();
+    double* psi_tmp_y_real=new double [nofstates]();
+    double* psi_tmp_y_imaginary=new double [nofstates]();
+    double* psi_tmp_z_real=new double [nofstates]();
+    double* psi_tmp_z_imaginary=new double [nofstates]();
+    int i1=(int) pow(2,k);
+    // #pragma omp parallel for default(none) private(psi_tmp_x_real,psi_tmp_x_imaginary,psi_tmp_y_real,psi_tmp_y_imaginary,psi_tmp_z_real,psi_tmp_z_imaginary)shared(i1,std::cout)
+    for (int l = 0; l < nofstates; l+=2) {
+      // cout<<"Pass!"<<endl;
+      int i2= l & i1;
+      int i = l -i2+i2/i1;
+      int j = i+i1;
+      /*sigma_x*/
+      psi_tmp_x_real[i]     += 0.5*psi_real[j];
+      psi_tmp_x_imaginary[i]+= 0.5*psi_imaginary[j];
+      psi_tmp_x_real[j]     += 0.5*psi_real[i];
+      psi_tmp_x_imaginary[j]+= 0.5*psi_imaginary[i];
+      /*sigma_y*/
+      psi_tmp_y_real[i]     += 0.5*psi_imaginary[j];
+      psi_tmp_y_imaginary[i]+= -0.5*psi_real[j];
+      psi_tmp_y_real[j]     += -0.5*psi_imaginary[i];
+      psi_tmp_y_imaginary[j]+= 0.5*psi_real[i];
+      /*sigma_z*/
+      psi_tmp_z_real[i]     += 0.5*psi_real[i];
+      psi_tmp_z_imaginary[i]+= 0.5*psi_imaginary[i];
+      psi_tmp_z_real[j]     += -0.5*psi_real[j];
+      psi_tmp_z_imaginary[j]+= -0.5*psi_imaginary[j];
+    }
+    for (int i = 0; i < nofstates; ++i) {
+      spin_return[(k*3)]   += psi_real[i]*psi_tmp_x_real[i] - -1*psi_imaginary[i]*psi_tmp_x_imaginary[i];
+      spin_return[(k*3)+1] += psi_real[i]*psi_tmp_y_real[i] - -1*psi_imaginary[i]*psi_tmp_y_imaginary[i];
+      spin_return[(k*3)+2] += psi_real[i]*psi_tmp_z_real[i] - -1*psi_imaginary[i]*psi_tmp_z_imaginary[i];
+      check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
+    }
+    if (abs(check_img)>1e-13)
+      cout<<"Something went wrong in function spin()"<<check_img<<endl;
+
+  }
+
+
+
+
+
+}
+
 
 /*
   Read in the number from a txt into an array
@@ -1085,10 +1161,8 @@ void spin_system::environment(int N, double Temperature){
   double abstol = 2*DLAMCH("S");
   int m;
   complex<double> ap[nofstates*(nofstates+1)/2];
-  ofstream check_out("check_out2");
   for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
     ap[i]=H_env[i];
-    check_out<<ap[i]<<endl;
   }
 
 
@@ -1171,6 +1245,7 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
   }
   // cout<<"sum inside generate functoin: "<<sum<<endl;
 }
+
 /*
   Make J_env txt file randomly between [-1,1]
   It is the coupling factor for environment spins
@@ -1246,9 +1321,9 @@ void spin_system::Jenv_generate(int N, double G){
 void spin_system::run(){
   // ofstream out_data("../Result/product_formula/gs_T_1e100_t_1e-1.dat");
   // ofstream E_out("../Result/Verify/spin_x4_pd.dat");
-  ofstream output("output.dat");
+  ofstream output("output_ind.dat");
   output<<"Time Energy ";
-  for (int i = 0; i < N_sys; i++) {
+  for (int i = 0; i < N; i++) {
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
   }
   output<<endl;
@@ -1257,37 +1332,36 @@ void spin_system::run(){
 
   /////test not go over whole J again and again/////
   //////////////////////////////////////////////////
-
-  count_z=0;
-  count_y=0;
-  count_x=0;
-  Jz_k_marked=new double [N_sys*(N_sys+1)/2];
-  Jz_l_marked=new double [N_sys*(N_sys+1)/2];
-  Jy_k_marked=new double [N_sys*(N_sys+1)/2];
-  Jy_l_marked=new double [N_sys*(N_sys+1)/2];
-  Jx_k_marked=new double [N_sys*(N_sys+1)/2];
-  Jx_l_marked=new double [N_sys*(N_sys+1)/2];
-  for (int k = 0; k <N_sys ; k++) {
-    for (int l = k+1; l < N_sys; l++) {
-      if (abs(J_z[k+l*N_sys])>1e-15){
-        Jz_k_marked[count_z]=k;
-        Jz_l_marked[count_z]=l;
-        count_z+=1;
-      }
-      if (abs(J_y[k+l*N_sys])>1e-15){
-        Jy_k_marked[count_y]=k;
-        Jy_l_marked[count_y]=l;
-        count_y+=1;
-      }
-      if (abs(J_x[k+l*N_sys])>1e-15){
-        Jx_k_marked[count_x]=k;
-        Jx_l_marked[count_x]=l;
-        count_x+=1;
-      }
-    }
-  }
-
-  cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
+  // count_z=0;
+  // count_y=0;
+  // count_x=0;
+  // Jz_k_marked=new double [N_sys*(N_sys+1)/2];
+  // Jz_l_marked=new double [N_sys*(N_sys+1)/2];
+  // Jy_k_marked=new double [N_sys*(N_sys+1)/2];
+  // Jy_l_marked=new double [N_sys*(N_sys+1)/2];
+  // Jx_k_marked=new double [N_sys*(N_sys+1)/2];
+  // Jx_l_marked=new double [N_sys*(N_sys+1)/2];
+  // for (int k = 0; k <N_sys ; k++) {
+  //   for (int l = k+1; l < N_sys; l++) {
+  //     if (abs(J_z[k+l*N_sys])>1e-15){
+  //       Jz_k_marked[count_z]=k;
+  //       Jz_l_marked[count_z]=l;
+  //       count_z+=1;
+  //     }
+  //     if (abs(J_y[k+l*N_sys])>1e-15){
+  //       Jy_k_marked[count_y]=k;
+  //       Jy_l_marked[count_y]=l;
+  //       count_y+=1;
+  //     }
+  //     if (abs(J_x[k+l*N_sys])>1e-15){
+  //       Jx_k_marked[count_x]=k;
+  //       Jx_l_marked[count_x]=l;
+  //       count_x+=1;
+  //     }
+  //   }
+  // }
+  //
+  // cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
 
@@ -1301,9 +1375,14 @@ void spin_system::run(){
 
     energy(step*tau);
     output<<step*tau<<" "<<average_energy<<" ";
-    for (int s = 0; s < N_sys; s++) {
+    /*
+    for (int s = 0; s < N; s++) {
       output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
-    }
+    }*/
+    spin_allinone();
+    for (int i = 0; i < N*3; i++)
+      output<<spin_return[i]<<" ";
+
     output<<endl;
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
@@ -1312,6 +1391,7 @@ void spin_system::run(){
     double_spin_op_y(step*tau);
     double_spin_op_x(step*tau);
     single_spin_op(step*tau);
+
 
 
     double gs=0.;
