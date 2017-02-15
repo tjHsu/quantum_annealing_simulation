@@ -762,12 +762,7 @@ void spin_system::double_spin_op_z(double t){
           n1=n0+nii;
           n2=n0+njj;
           n3=n1+njj;
-          /////////checking!!!////////////
-          int tid=omp_get_thread_num();
-          // if(3==ch)
-          // cout<<"tid = "<<tid<<", n0, n1, n2, n3 = "<<n0<<", "<<n1<<", "<<n2<<", "<<n3<<endl;
-          /////////checking!!!////////////
-                  /* Following the similar manner in single_spin_op,
+          /* Following the similar manner in single_spin_op,
             I create several temperory variables to store values of psi
           */
           double psi_real_temp_n0      = 0;
@@ -1085,10 +1080,8 @@ void spin_system::environment(int N, double Temperature){
   double abstol = 2*DLAMCH("S");
   int m;
   complex<double> ap[nofstates*(nofstates+1)/2];
-  ofstream check_out("check_out2");
   for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
     ap[i]=H_env[i];
-    check_out<<ap[i]<<endl;
   }
 
 
