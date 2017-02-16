@@ -45,9 +45,7 @@ private:
   double* Jx_se;
   double* Jy_se;
   double* Jz_se;
-  double* Jx_com;
-  double* Jy_com;
-  double* Jz_com;
+
 
   double G;
   double* h_x;
@@ -58,15 +56,23 @@ private:
   double Delta;
 
 //optimize test
-  double* Jz_k_marked;
-  double* Jz_l_marked;
-  int count_z;
-  double* Jy_k_marked;
-  double* Jy_l_marked;
-  int count_y;
-  double* Jx_k_marked;
-  double* Jx_l_marked;
-  int count_x;
+  // double* Jz_k_marked;
+  // double* Jz_l_marked;
+  // int count_z;
+  // double* Jy_k_marked;
+  // double* Jy_l_marked;
+  // int count_y;
+  // double* Jx_k_marked;
+  // double* Jx_l_marked;
+  // int count_x;
+
+//optimize spin calculation
+// double* psi_tmp_x_real;
+// double* psi_tmp_x_imaginary;
+double* psi_tmp_y_real;
+double* psi_tmp_y_imaginary;
+double* psi_tmp_z_real;
+double* psi_tmp_z_imaginary;
 
   void single_spin_op(double);
   void double_spin_op(double);
@@ -91,8 +97,8 @@ public:
   double* psi_imaginary;
   double* psi_tmp_real;
   double* psi_tmp_imaginary;
-  double* H_real;
-  double* H_imaginary;
+  // double* H_real;
+  // double* H_imaginary;
   double* spin_return;
   double average_energy;
   double average_spin;
@@ -105,7 +111,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,100,0.1);
+  test.initialize(8,8,500,0.1);
 
 
   int N=16;
@@ -159,7 +165,7 @@ int main(int argc, char* argv[]){
     } else {
       if (0==(i-176)%256) {
         Coefficient_out<<tmp<<endl;
-        // cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
+        cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
         sum_GS+=tmp;
       } else {
         Coefficient_out<<tmp<<endl;
@@ -171,12 +177,12 @@ int main(int argc, char* argv[]){
     }
   }
 
-  // cout<<endl;
-  // cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  // cout<<"costed me "<<time<<" second in real time"<<endl;
-  // cout<<"norm after run = "<<norm<<endl;
-  // cout<<"max after run = "<<max<<endl;
-  // cout<<"location after run = "<<location<<endl;
+  cout<<endl;
+  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  cout<<"costed me "<<time<<" second in real time"<<endl;
+  cout<<"norm after run = "<<norm<<endl;
+  cout<<"max after run = "<<max<<endl;
+  cout<<"location after run = "<<location<<endl;
   cout<<endl;
   cout<<"pobability of GS: "<<sum_GS<<endl;
   cout<<"pobability of non-GS: "<<sum_ES<<endl;
@@ -298,7 +304,12 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     ds_operator_imaginary[i] = 0;
   }
 
-
+  // psi_tmp_x_real=new double [nofstates];
+  // psi_tmp_x_imaginary=new double [nofstates];
+  psi_tmp_y_real=new double [nofstates];
+  psi_tmp_y_imaginary=new double [nofstates];
+  psi_tmp_z_real=new double [nofstates];
+  psi_tmp_z_imaginary=new double [nofstates];
 
   /* initialize the Hamiltonian matrix for calculating the energy */
   // H_real = new double [nofstates*(nofstates+1)/2];
@@ -995,28 +1006,29 @@ void spin_system::spin_allinone(){
     spin_return[i]=0;
   }
 
-
-
   double check_img=0.;
   for (int k = 0; k < N; k++) {
-    double* psi_tmp_x_real=new double [nofstates]();
-    double* psi_tmp_x_imaginary=new double [nofstates]();
-    double* psi_tmp_y_real=new double [nofstates]();
-    double* psi_tmp_y_imaginary=new double [nofstates]();
-    double* psi_tmp_z_real=new double [nofstates]();
-    double* psi_tmp_z_imaginary=new double [nofstates]();
+    for (int i = 0; i < nofstates; i++) {
+      psi_tmp_real[i] = 0;
+      psi_tmp_imaginary[i] = 0;
+      psi_tmp_y_real[i] = 0;
+      psi_tmp_y_imaginary[i] = 0;
+      psi_tmp_z_real[i] = 0;
+      psi_tmp_z_imaginary[i] = 0;
+    }
     int i1=(int) pow(2,k);
-    // #pragma omp parallel for default(none) private(psi_tmp_x_real,psi_tmp_x_imaginary,psi_tmp_y_real,psi_tmp_y_imaginary,psi_tmp_z_real,psi_tmp_z_imaginary)shared(i1,std::cout)
+    #pragma omp parallel for default(none) shared(i1,std::cout)
     for (int l = 0; l < nofstates; l+=2) {
-      // cout<<"Pass!"<<endl;
       int i2= l & i1;
       int i = l -i2+i2/i1;
       int j = i+i1;
+      // cout<<"Pass!"<<endl;
       /*sigma_x*/
-      psi_tmp_x_real[i]     += 0.5*psi_real[j];
-      psi_tmp_x_imaginary[i]+= 0.5*psi_imaginary[j];
-      psi_tmp_x_real[j]     += 0.5*psi_real[i];
-      psi_tmp_x_imaginary[j]+= 0.5*psi_imaginary[i];
+      psi_tmp_real[i]     += 0.5*psi_real[j];
+      psi_tmp_imaginary[i]+= 0.5*psi_imaginary[j];
+      psi_tmp_real[j]     += 0.5*psi_real[i];
+      psi_tmp_imaginary[j]+= 0.5*psi_imaginary[i];
+
       /*sigma_y*/
       psi_tmp_y_real[i]     += 0.5*psi_imaginary[j];
       psi_tmp_y_imaginary[i]+= -0.5*psi_real[j];
@@ -1027,9 +1039,11 @@ void spin_system::spin_allinone(){
       psi_tmp_z_imaginary[i]+= 0.5*psi_imaginary[i];
       psi_tmp_z_real[j]     += -0.5*psi_real[j];
       psi_tmp_z_imaginary[j]+= -0.5*psi_imaginary[j];
+
     }
+
     for (int i = 0; i < nofstates; ++i) {
-      spin_return[(k*3)]   += psi_real[i]*psi_tmp_x_real[i] - -1*psi_imaginary[i]*psi_tmp_x_imaginary[i];
+      spin_return[(k*3)]   += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
       spin_return[(k*3)+1] += psi_real[i]*psi_tmp_y_real[i] - -1*psi_imaginary[i]*psi_tmp_y_imaginary[i];
       spin_return[(k*3)+2] += psi_real[i]*psi_tmp_z_real[i] - -1*psi_imaginary[i]*psi_tmp_z_imaginary[i];
       check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
@@ -1375,10 +1389,10 @@ void spin_system::run(){
 
     energy(step*tau);
     output<<step*tau<<" "<<average_energy<<" ";
-    /*
-    for (int s = 0; s < N; s++) {
-      output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
-    }*/
+
+    // for (int s = 0; s < N; s++) {
+    //   output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+    // }
     spin_allinone();
     for (int i = 0; i < N*3; i++)
       output<<spin_return[i]<<" ";
