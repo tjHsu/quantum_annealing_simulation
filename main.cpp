@@ -111,7 +111,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,500,0.1);
+  test.initialize(8,8,3000,0.5);
 
 
   int N=16;
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]){
     } else {
       if (0==(i-176)%256) {
         Coefficient_out<<tmp<<endl;
-        cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
+        // cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
         sum_GS+=tmp;
       } else {
         Coefficient_out<<tmp<<endl;
@@ -262,10 +262,10 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
   // G=1.0;
   // Jenv_generate(N_env,G);
-  G=0.0;
+  G=0.001;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.00001);
+  environment(N_env,0.05);
 
   /* initialize the wave function in the ground state
   */
@@ -379,6 +379,25 @@ void spin_system::generate_initial_sys_state(char const * d){
         Psi_r_out<<psi_real[i]<<endl;
         Psi_i_out<<psi_imaginary[i]<<endl;
     }
+  }
+  else if ("allRand"==d){
+    srand (time(NULL));
+    double normalize_factor=0.;
+    for (int i = 0; i < (int) pow(2,N_sys); i++) {
+        psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+        psi_imaginary[i] = (double) rand()/RAND_MAX;
+        normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+    }
+    ofstream Psi_r_out("psi_real.dat");
+    ofstream Psi_i_out("psi_imagine.dat");
+    normalize_factor = sqrt(normalize_factor);
+    for (int i = 0; i < (int) pow(2,N_sys); i++) {
+      psi_real[i]      =psi_real[i]/normalize_factor;
+      psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
+      Psi_r_out<<psi_real[i]<<endl;
+      Psi_i_out<<psi_imaginary[i]<<endl;
+    }
+
   }
 
   else {
@@ -1017,36 +1036,52 @@ void spin_system::spin_allinone(){
       psi_tmp_z_imaginary[i] = 0;
     }
     int i1=(int) pow(2,k);
-    #pragma omp parallel for default(none) shared(i1,std::cout)
-    for (int l = 0; l < nofstates; l+=2) {
-      int i2= l & i1;
-      int i = l -i2+i2/i1;
-      int j = i+i1;
-      // cout<<"Pass!"<<endl;
-      /*sigma_x*/
-      psi_tmp_real[i]     += 0.5*psi_real[j];
-      psi_tmp_imaginary[i]+= 0.5*psi_imaginary[j];
-      psi_tmp_real[j]     += 0.5*psi_real[i];
-      psi_tmp_imaginary[j]+= 0.5*psi_imaginary[i];
+    for (int d = 0; d < 3; d++) { //d = 0,1,2 means x,y,z
+        /* code */
+      #pragma omp parallel for default(none) shared(i1,std::cout,d)
+      for (int l = 0; l < nofstates; l+=2) {
+        int i2= l & i1;
+        int i = l -i2+i2/i1;
+        int j = i+i1;
 
-      /*sigma_y*/
-      psi_tmp_y_real[i]     += 0.5*psi_imaginary[j];
-      psi_tmp_y_imaginary[i]+= -0.5*psi_real[j];
-      psi_tmp_y_real[j]     += -0.5*psi_imaginary[i];
-      psi_tmp_y_imaginary[j]+= 0.5*psi_real[i];
-      /*sigma_z*/
-      psi_tmp_z_real[i]     += 0.5*psi_real[i];
-      psi_tmp_z_imaginary[i]+= 0.5*psi_imaginary[i];
-      psi_tmp_z_real[j]     += -0.5*psi_real[j];
-      psi_tmp_z_imaginary[j]+= -0.5*psi_imaginary[j];
+        if(0==d){
+          /*sigma_x*/
+          psi_tmp_real[i]     += 0.5*psi_real[j];
+          psi_tmp_imaginary[i]+= 0.5*psi_imaginary[j];
+          psi_tmp_real[j]     += 0.5*psi_real[i];
+          psi_tmp_imaginary[j]+= 0.5*psi_imaginary[i];
+        } else if (1==d){
+          /*sigma_y*/
+          psi_tmp_y_real[i]     += 0.5*psi_imaginary[j];
+          psi_tmp_y_imaginary[i]+= -0.5*psi_real[j];
+          psi_tmp_y_real[j]     += -0.5*psi_imaginary[i];
+          psi_tmp_y_imaginary[j]+= 0.5*psi_real[i];
+        } else {
+          /*sigma_z*/
+          psi_tmp_z_real[i]     += 0.5*psi_real[i];
+          psi_tmp_z_imaginary[i]+= 0.5*psi_imaginary[i];
+          psi_tmp_z_real[j]     += -0.5*psi_real[j];
+          psi_tmp_z_imaginary[j]+= -0.5*psi_imaginary[j];
+        }
+      }
 
-    }
-
-    for (int i = 0; i < nofstates; ++i) {
-      spin_return[(k*3)]   += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
-      spin_return[(k*3)+1] += psi_real[i]*psi_tmp_y_real[i] - -1*psi_imaginary[i]*psi_tmp_y_imaginary[i];
-      spin_return[(k*3)+2] += psi_real[i]*psi_tmp_z_real[i] - -1*psi_imaginary[i]*psi_tmp_z_imaginary[i];
-      check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
+      // for (int i = 0; i < nofstates; ++i) {
+      //
+      //   spin_return[(k*3)]   += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
+      //   spin_return[(k*3)+1] += psi_real[i]*psi_tmp_y_real[i] - -1*psi_imaginary[i]*psi_tmp_y_imaginary[i];
+      //   spin_return[(k*3)+2] += psi_real[i]*psi_tmp_z_real[i] - -1*psi_imaginary[i]*psi_tmp_z_imaginary[i];
+      //   check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
+      // }
+      if(0==d){
+        for (int i = 0; i < nofstates; ++i)
+          spin_return[(k*3)]   += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
+      } else if(1==d) {
+        for (int i = 0; i < nofstates; ++i)
+          spin_return[(k*3)+1] += psi_real[i]*psi_tmp_y_real[i] - -1*psi_imaginary[i]*psi_tmp_y_imaginary[i];
+      } else {
+        for (int i = 0; i < nofstates; ++i)
+          spin_return[(k*3)+2] += psi_real[i]*psi_tmp_z_real[i] - -1*psi_imaginary[i]*psi_tmp_z_imaginary[i];
+      }
     }
     if (abs(check_img)>1e-13)
       cout<<"Something went wrong in function spin()"<<check_img<<endl;
@@ -1390,12 +1425,12 @@ void spin_system::run(){
     energy(step*tau);
     output<<step*tau<<" "<<average_energy<<" ";
 
-    // for (int s = 0; s < N; s++) {
-    //   output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
-    // }
-    spin_allinone();
-    for (int i = 0; i < N*3; i++)
-      output<<spin_return[i]<<" ";
+    for (int s = 0; s < N; s++) {
+      output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+    }
+    // spin_allinone();
+    // for (int i = 0; i < N*3; i++)
+    //   output<<spin_return[i]<<" ";
 
     output<<endl;
     single_spin_op(step*tau);
