@@ -76,6 +76,7 @@ private:
 
   //Basis for bath
   complex<double>* z;
+  double* w;
 
   void single_spin_op(double);
   void double_spin_op(double);
@@ -101,6 +102,8 @@ public:
   double* psi_imaginary;
   double* psi_tmp_real;
   double* psi_tmp_imaginary;
+  double* psi_sys_real;
+  double* psi_sys_imaginary;
   // double* H_real;
   // double* H_imaginary;
   double* spin_return;
@@ -260,6 +263,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_z,"h2.txt");
 
   z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)];
+  w= new double [(int)pow(2,N_env)];
   // G=1.0;
   // Jenv_generate(N_env,G);
   G=0.001;
@@ -277,14 +281,21 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
       psi_real[i]      = 0;
       psi_imaginary[i] = 0;
   }
-  set_initial_sys_state("allx");
-  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
   psi_tmp_real = new double [nofstates];
   psi_tmp_imaginary = new double [nofstates];
   for (int i = 0; i < nofstates; i++) {
     psi_tmp_real[i]      = 0;
     psi_tmp_imaginary[i] = 0;
   }
+
+  psi_sys_real = new double [(int)pow(2,N_sys)];
+  psi_sys_imaginary = new double [(int)pow(2,N_sys)];
+  for (int i = 0; i < (int)pow(2,N_sys); i++) {
+    psi_sys_real[i]      = 0;
+    psi_sys_imaginary[i] = 0;
+  }
+  set_initial_sys_state("allx");
+  // generate(N,psi_real,psi_imaginary,"psi_real.dat","psi_imagine.dat","env_real.dat","env_imag.dat");
 
   average_energy=0.;
   /* initialize the  matrix. We have two kind of Hamiltonian operator here.
@@ -341,8 +352,8 @@ void spin_system::set_initial_sys_state(char const * d){
 
 
   if ("read"==d){
-    read(nofstates,psi_real,"psi_real.dat");
-    read(nofstates,psi_imaginary,"psi_imagine.dat");
+    read((int)pow(2,N_sys),psi_sys_real,"psi_real.dat");
+    read((int)pow(2,N_sys),psi_sys_imaginary,"psi_imagine.dat");
     cout<<"RRR"<<endl;
   }
   else if ("1upRand"==d) {
@@ -350,12 +361,12 @@ void spin_system::set_initial_sys_state(char const * d){
     double normalize_factor=0.;
     for (int i = 0; i < (int) pow(2,N_sys); i++) {
       if(i%2==0){
-        psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
-        psi_imaginary[i] = (double) rand()/RAND_MAX;
-        normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+        psi_sys_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+        psi_sys_imaginary[i] = (double) rand()/RAND_MAX;
+        normalize_factor += psi_sys_real[i]*psi_sys_real[i] + psi_sys_imaginary[i]*psi_sys_imaginary[i];
       } else {
-        psi_real[i]      = 0;
-        psi_imaginary[i] = 0;
+        psi_sys_real[i]      = 0;
+        psi_sys_imaginary[i] = 0;
       }
     }
     ofstream Psi_r_out("psi_real.dat");
@@ -363,11 +374,11 @@ void spin_system::set_initial_sys_state(char const * d){
     normalize_factor = sqrt(normalize_factor);
     for (int i = 0; i < (int) pow(2,N_sys); i++) {
       if(i%2==0){
-        psi_real[i]      =psi_real[i]/normalize_factor;
-        psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
+        psi_sys_real[i]      =psi_sys_real[i]/normalize_factor;
+        psi_sys_imaginary[i] =psi_sys_imaginary[i]/normalize_factor;
       }
-      Psi_r_out<<psi_real[i]<<endl;
-      Psi_i_out<<psi_imaginary[i]<<endl;
+      Psi_r_out<<psi_sys_real[i]<<endl;
+      Psi_i_out<<psi_sys_imaginary[i]<<endl;
     }
 
   }
@@ -375,28 +386,28 @@ void spin_system::set_initial_sys_state(char const * d){
     ofstream Psi_r_out("psi_real.dat");
     ofstream Psi_i_out("psi_imagine.dat");
     for (int i = 0; i < (int) pow(2,N_sys); i++) {
-        psi_real[i]      =pow((int) pow(2,N_sys), -0.5);
-        psi_imaginary[i] =0;
-        Psi_r_out<<psi_real[i]<<endl;
-        Psi_i_out<<psi_imaginary[i]<<endl;
+        psi_sys_real[i]      =pow((int) pow(2,N_sys), -0.5);
+        psi_sys_imaginary[i] =0;
+        Psi_r_out<<psi_sys_real[i]<<endl;
+        Psi_i_out<<psi_sys_imaginary[i]<<endl;
     }
   }
   else if ("allRand"==d){
     srand (time(NULL));
     double normalize_factor=0.;
     for (int i = 0; i < (int) pow(2,N_sys); i++) {
-        psi_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
-        psi_imaginary[i] = (double) rand()/RAND_MAX;
-        normalize_factor += psi_real[i]*psi_real[i] + psi_imaginary[i]*psi_imaginary[i];
+        psi_sys_real[i]      = (double) rand()/RAND_MAX;//pow(nofstates, -0.5);
+        psi_sys_imaginary[i] = (double) rand()/RAND_MAX;
+        normalize_factor += psi_sys_real[i]*psi_sys_real[i] + psi_sys_imaginary[i]*psi_sys_imaginary[i];
     }
     ofstream Psi_r_out("psi_real.dat");
     ofstream Psi_i_out("psi_imagine.dat");
     normalize_factor = sqrt(normalize_factor);
     for (int i = 0; i < (int) pow(2,N_sys); i++) {
-      psi_real[i]      =psi_real[i]/normalize_factor;
-      psi_imaginary[i] =psi_imaginary[i]/normalize_factor;
-      Psi_r_out<<psi_real[i]<<endl;
-      Psi_i_out<<psi_imaginary[i]<<endl;
+      psi_sys_real[i]      =psi_sys_real[i]/normalize_factor;
+      psi_sys_imaginary[i] =psi_sys_imaginary[i]/normalize_factor;
+      Psi_r_out<<psi_sys_real[i]<<endl;
+      Psi_i_out<<psi_sys_imaginary[i]<<endl;
     }
 
   }
@@ -1018,7 +1029,7 @@ double spin_system::spin(char d,int which_spin){
   Output:
     change the array spin_return[]
 */
-void spin_system::spin_allinone(){
+  void spin_system::spin_allinone(){
   for (int i = 0; i < N*3; i++){
     spin_return[i]=0;
   }
@@ -1443,46 +1454,52 @@ void spin_system::run(){
   //////////////////////////////////////////////////
 
   for (int step = 0; step < total_steps+1; step++){
+    int count=0;
     for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
-      /* code */
+      cout<<"step: "<<step<<" count= "<<count++<<endl;
+      direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
+
+      // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+      //   H_real[i]=0.;
+      //   H_imaginary[i]=0.;
+      // }
+
+      /*//Output measurement
+      Delta=step*tau/T;
+      Gamma=1-Delta;
+
+      energy(step*tau);
+      output<<step*tau<<" "<<average_energy<<" ";
+
+      for (int s = 0; s < N; s++) {
+        output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+      }
+      // spin_allinone();
+      // for (int i = 0; i < N*3; i++)
+      //   output<<spin_return[i]<<" ";
+      // output<<endl;
+      //end output*/
+
+
+      single_spin_op(step*tau);
+      double_spin_op_x(step*tau);
+      double_spin_op_y(step*tau);
+      double_spin_op_z(step*tau);
+      double_spin_op_y(step*tau);
+      double_spin_op_x(step*tau);
+      single_spin_op(step*tau);
+
+
+
+      double gs=0.;
+
+      // E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
+      // E_out<<step*tau<<" "<<average_spin<<endl;
+
+
+      // gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
+      // out_data<<step*tau/T<<" "<<gs<<endl;
+      // gs =0.;
     }
-    // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
-    //   H_real[i]=0.;
-    //   H_imaginary[i]=0.;
-    // }
-    Delta=step*tau/T;
-    Gamma=1-Delta;
-
-    energy(step*tau);
-    output<<step*tau<<" "<<average_energy<<" ";
-
-    for (int s = 0; s < N; s++) {
-      output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
-    }
-    // spin_allinone();
-    // for (int i = 0; i < N*3; i++)
-    //   output<<spin_return[i]<<" ";
-
-    output<<endl;
-    single_spin_op(step*tau);
-    double_spin_op_x(step*tau);
-    double_spin_op_y(step*tau);
-    double_spin_op_z(step*tau);
-    double_spin_op_y(step*tau);
-    double_spin_op_x(step*tau);
-    single_spin_op(step*tau);
-
-
-
-    double gs=0.;
-
-    // E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
-    // E_out<<step*tau<<" "<<average_spin<<endl;
-
-
-    // gs=psi_real[176]*psi_real[176]+psi_imaginary[176]*psi_imaginary[176];
-    // out_data<<step*tau/T<<" "<<gs<<endl;
-    // gs =0.;
-
   }
 }
