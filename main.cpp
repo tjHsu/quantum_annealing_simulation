@@ -111,7 +111,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,3000,0.5);
+  test.initialize(8,8,100,0.5);
 
 
   int N=16;
