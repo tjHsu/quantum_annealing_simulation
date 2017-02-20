@@ -74,9 +74,7 @@ private:
   double* psi_tmp_z_real;
   double* psi_tmp_z_imaginary;
 
-  //Basis for bath
-  complex<double>* z;
-  double* w;
+
 
   void single_spin_op(double);
   void double_spin_op(double);
@@ -84,7 +82,7 @@ private:
   void double_spin_op_y(double);
   void double_spin_op_z(double);
   void set_initial_sys_state(char const *);
-  void energy(double);
+  double energy(double);
   double spin(char,int);
   void spin_allinone();
 
@@ -107,8 +105,13 @@ public:
   // double* H_real;
   // double* H_imaginary;
   double* spin_return;
+  double* energy_return;
   double average_energy;
   double average_spin;
+
+  //Basis for bath
+  complex<double>* z;
+  double* w;
   void Jenv_generate(int,double);
   void Jse_generate(int, int, double);
 
@@ -118,7 +121,7 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,3000,0.5);
+  test.initialize(8,8,100,0.5);
 
 
   int N=16;
@@ -245,9 +248,13 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     h_y[i]=0.;
     h_z[i]=0.;
   }
-  spin_return = new double [N*3];//3 state for x,y,z
-  for (int i = 0; i < N*3; i++){
+  spin_return = new double [N*3*(int) (T/tau)];//3 state for x,y,z
+  for (int i = 0; i < N*3*(int) (T/tau); i++){
     spin_return[i]=0;
+  }
+  energy_return = new double [(int) (T/tau)];
+  for (int i = 0; i < (int)(T/tau); i++) {
+    energy_return[i]=0;
   }
 
 
@@ -263,13 +270,19 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_z,"h2.txt");
 
   z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)];
+  for (int i = 0; i < (int)pow(2,N_env)*(int)pow(2,N_env); i++) {
+    z[i]=0;
+  }
   w= new double [(int)pow(2,N_env)];
-  // G=1.0;
-  // Jenv_generate(N_env,G);
+  for (int i = 0; i < (int)pow(2,N_env); i++) {
+    w[i]=0;
+  }
+  G=1.0;
+  Jenv_generate(N_env,G);
   G=0.001;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.05);
+  environment(N_env,0.0005);
 
 
   /* initialize the wave function in the ground state
@@ -864,7 +877,7 @@ void spin_system::double_spin_op_z(double t){
     t: the current time point
 
 */
-void spin_system::energy(double t){
+double spin_system::energy(double t){
   for (int i = 0; i < nofstates; i++) {
     psi_tmp_real[i]      = 0.;
     psi_tmp_imaginary[i] = 0.;
@@ -951,6 +964,8 @@ void spin_system::energy(double t){
   }
   if (abs(check_img)>1e-13)
     cout<<"Something went wrong in functoin energy()   "<<check_img<<endl;
+
+  return average_energy;
 }
 
 /*
@@ -1212,7 +1227,7 @@ void spin_system::environment(int N, double Temperature){
 
   //start preparing variable for lapack use
   //solving the energy to w[] array. then use it as the coefficient of |E_B>.
-  double w[nofstates];
+  // double w[nofstates];
   int n=nofstates;
   double vl,vu;
   int il,iu;
@@ -1284,7 +1299,7 @@ void spin_system::direct_product(int n, double* array_real, double* array_imagin
     for (int j = 0; j < nos_sys; j++) {
       array_real[i*nos_sys+j]=env[n*nos_env+i].real()*sys_real[j]-env[n*nos_env+i].imag()*sys_imag[j];
       array_imagine[i*nos_sys+j]=env[n*nos_env+i].imag()*sys_real[j]+env[n*nos_env+i].real()*sys_imag[j];
-      // state_out<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
+      // cout<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
     }
   }
 
@@ -1409,15 +1424,10 @@ void spin_system::Jenv_generate(int N, double G){
 void spin_system::run(){
   // ofstream out_data("../Result/product_formula/gs_T_1e100_t_1e-1.dat");
   // ofstream E_out("../Result/Verify/spin_x4_pd.dat");
-  ofstream output("output_ind.dat");
-  output<<"Time Energy ";
-  for (int i = 0; i < N; i++) {
-    output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
-  }
-  output<<endl;
+
   int total_steps=0;
   total_steps=(int) T/tau;
-
+  int count=0;
   /////test not go over whole J again and again/////
   //////////////////////////////////////////////////
   // count_z=0;
@@ -1452,33 +1462,43 @@ void spin_system::run(){
   // cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
-
-  for (int step = 0; step < total_steps+1; step++){
-    int count=0;
-    for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
-      cout<<"step: "<<step<<" count= "<<count++<<endl;
-      direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
+  for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
+    if (abs(w[E_i]-0)<1e-8) continue;
+    // cout<<"count= "<<count++<<"w[ ]= "<<w[E_i]<<endl;
+    direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
+    // cout<<psi_sys_real[1]<<endl;
+    for (int step = 0; step < total_steps; step++){
+      // continue;
+      cout<<"E_i= "<<E_i<<", w[]= "<<w[E_i]<<", step: "<<step<<endl;
 
       // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
       //   H_real[i]=0.;
       //   H_imaginary[i]=0.;
       // }
 
-      /*//Output measurement
+      //Output measurement
       Delta=step*tau/T;
       Gamma=1-Delta;
 
-      energy(step*tau);
-      output<<step*tau<<" "<<average_energy<<" ";
+      energy_return[step]+=w[E_i]*energy(step*tau);
+      // output<<step*tau<<" "<<average_energy<<" ";
 
       for (int s = 0; s < N; s++) {
-        output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+        int index=step*N*3+s*3;
+        // cout<<index<<endl;
+        spin_return[index]  +=w[E_i]*spin('x',s);
+        spin_return[index+1]+=w[E_i]*spin('y',s);
+        spin_return[index+2]+=w[E_i]*spin('z',s);
       }
+
+      // for (int s = 0; s < N; s++) {
+      //   output<<spin('x',s)<<" "<<spin('y',s)<<" "<<spin('z',s)<<" ";
+      // }
       // spin_allinone();
       // for (int i = 0; i < N*3; i++)
       //   output<<spin_return[i]<<" ";
       // output<<endl;
-      //end output*/
+      //end output
 
 
       single_spin_op(step*tau);
@@ -1502,4 +1522,18 @@ void spin_system::run(){
       // gs =0.;
     }
   }
+  ofstream output("output_ind.dat");
+  output<<"Time Energy ";
+  for (int i = 0; i < N; i++) {
+    output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
+  }
+  output<<endl;
+  for (int step = 0; step < total_steps; step++){
+    output<<step*tau<<" "<<energy_return[step]<<" ";
+    for (int i = 0; i < 3*N; i++) {
+      output<<spin_return[step*3*N+i]<<" ";
+    }
+    output<<endl;
+  }
+
 }
