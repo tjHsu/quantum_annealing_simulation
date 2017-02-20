@@ -106,6 +106,7 @@ public:
   // double* H_imaginary;
   double* spin_return;
   double* energy_return;
+  double* coefficient_return;
   double average_energy;
   double average_spin;
 
@@ -121,17 +122,17 @@ public:
 int main(int argc, char* argv[]){
 
   spin_system test;
-  test.initialize(8,8,100,0.5);
+  test.initialize(8,8,100,0.1);
 
 
   int N=16;
   int nofstates=(int) pow(2,N);
 
   double norm=0.;
-  for (int i = 0; i < nofstates; i++) {
-    norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-  }
-  cout<<"norm before run = "<<norm<<endl;
+  // for (int i = 0; i < nofstates; i++) {
+  //   norm+=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  // }
+  // cout<<"norm before run = "<<norm<<endl;
   time_t start=time(0);
   clock_t t;
   t = clock();
@@ -140,54 +141,67 @@ int main(int argc, char* argv[]){
   time_t end=time(0);
   double time=difftime(end,start);
 
-  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  cout<<"costed me "<<time<<" second in real time"<<endl;
+  // cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  // cout<<"costed me "<<time<<" second in real time"<<endl;
+  //
+  // norm =0.;
+  //
+  // double max=0.;
+  // int location;
+  // for (int i = 0; i < nofstates; i++) {
+  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  //   norm+=tmp;
+  //   if (tmp > max) {
+  //     max = tmp;
+  //     location = i;
+  //   }
+  // }
 
-  norm =0.;
-
-  double max=0.;
-  int location;
-  for (int i = 0; i < nofstates; i++) {
-    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-    norm+=tmp;
-    if (tmp > max) {
-      max = tmp;
-      location = i;
-    }
-  }
-  cout<<"norm after run = "<<norm<<endl;
-  cout<<"max after run = "<<max<<endl;
-  cout<<"location after run = "<<location<<endl;
-
-  ofstream Coefficient_out("coefficient.dat");
   double sum_GS=0.;
   double sum_ES=0.;
-  for (int i = 0; i < nofstates; i++) {
-    double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
-    if(tmp<1e-8){
-      Coefficient_out<<0<<endl;
-      sum_ES+=tmp;
+  norm=0.;
+  for(int i=0; i<nofstates;i++){
+    norm+=test.coefficient_return[i];
+    if (0==(i-176)%256) {
+      sum_GS+=test.coefficient_return[i];
     } else {
-      if (0==(i-176)%256) {
-        Coefficient_out<<tmp<<endl;
-        // cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
-        sum_GS+=tmp;
-      } else {
-        Coefficient_out<<tmp<<endl;
-        if (tmp>1e-2)
-          cout<<i<<"th= "<<tmp<<endl;
-        sum_ES+=tmp;
-      }
-
+      sum_ES+=test.coefficient_return[i];
     }
   }
+
+  // cout<<"norm after run = "<<norm<<endl;
+  // cout<<"max after run = "<<max<<endl;
+  // cout<<"location after run = "<<location<<endl;
+
+  // ofstream Coefficient_out("coefficient.dat");
+  // double sum_GS=0.;
+  // double sum_ES=0.;
+  // for (int i = 0; i < nofstates; i++) {
+  //   double tmp=test.psi_real[i]*test.psi_real[i]+test.psi_imaginary[i]*test.psi_imaginary[i];
+  //   if(tmp<1e-8){
+  //     Coefficient_out<<0<<endl;
+  //     sum_ES+=tmp;
+  //   } else {
+  //     if (0==(i-176)%256) {
+  //       Coefficient_out<<tmp<<endl;
+  //       // cout<<(i-176)/256<<"th GS= "<<tmp<<endl;
+  //       sum_GS+=tmp;
+  //     } else {
+  //       Coefficient_out<<tmp<<endl;
+  //       if (tmp>1e-2)
+  //         cout<<i<<"th= "<<tmp<<endl;
+  //       sum_ES+=tmp;
+  //     }
+  //
+  //   }
+  // }
 
   cout<<endl;
   cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
   cout<<"costed me "<<time<<" second in real time"<<endl;
   cout<<"norm after run = "<<norm<<endl;
-  cout<<"max after run = "<<max<<endl;
-  cout<<"location after run = "<<location<<endl;
+  // cout<<"max after run = "<<max<<endl;
+  // cout<<"location after run = "<<location<<endl;
   cout<<endl;
   cout<<"pobability of GS: "<<sum_GS<<endl;
   cout<<"pobability of non-GS: "<<sum_ES<<endl;
@@ -248,14 +262,21 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     h_y[i]=0.;
     h_z[i]=0.;
   }
-  spin_return = new double [N*3*(int) (T/tau)];//3 state for x,y,z
-  for (int i = 0; i < N*3*(int) (T/tau); i++){
-    spin_return[i]=0;
+  int total_steps=(int) (T/tau);
+
+  spin_return = new double [N*3*(total_steps+1)];//3 state for x,y,z
+  for (int i = 0; i < N*3*(total_steps+1); i++){
+    spin_return[i]=0.;
   }
-  energy_return = new double [(int) (T/tau)];
-  for (int i = 0; i < (int)(T/tau); i++) {
-    energy_return[i]=0;
+  energy_return = new double [total_steps+1];
+  for (int i = 0; i < (total_steps+1); i++) {
+    energy_return[i]=0.;
   }
+  coefficient_return = new double [nofstates];
+  for (int i = 0; i < nofstates; i++) {
+    coefficient_return[i]=0.;
+  }
+
 
 
   read(N_sys*N_sys,J_z,"J2.txt");
@@ -282,7 +303,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   G=0.001;
   Jse_generate(N_sys,N_env,G);
 
-  environment(N_env,0.0005);
+  environment(N_env,0.05);
 
 
   /* initialize the wave function in the ground state
@@ -1428,6 +1449,7 @@ void spin_system::run(){
   int total_steps=0;
   total_steps=(int) T/tau;
   int count=0;
+
   /////test not go over whole J again and again/////
   //////////////////////////////////////////////////
   // count_z=0;
@@ -1462,14 +1484,14 @@ void spin_system::run(){
   // cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
   //////////////////////////////////////////////////
   //////////////////////////////////////////////////
+
   for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
     if (abs(w[E_i]-0)<1e-8) continue;
     // cout<<"count= "<<count++<<"w[ ]= "<<w[E_i]<<endl;
     direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
     // cout<<psi_sys_real[1]<<endl;
-    for (int step = 0; step < total_steps; step++){
-      // continue;
-      cout<<"E_i= "<<E_i<<", w[]= "<<w[E_i]<<", step: "<<step<<endl;
+    for (int step = 0; step < total_steps+1; step++){ //+1 because i count the 0 point and the last poing as well.
+
 
       // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
       //   H_real[i]=0.;
@@ -1479,6 +1501,8 @@ void spin_system::run(){
       //Output measurement
       Delta=step*tau/T;
       Gamma=1-Delta;
+      if (step%500==0)
+        cout<<"E_i= "<<E_i<<", w[]= "<<w[E_i]<<", step: "<<step<<endl;
 
       energy_return[step]+=w[E_i]*energy(step*tau);
       // output<<step*tau<<" "<<average_energy<<" ";
@@ -1511,7 +1535,7 @@ void spin_system::run(){
 
 
 
-      double gs=0.;
+      // double gs=0.;
 
       // E_out<<step*tau/T<<" "<<energy_Hmatrix<<" "<<average_energy<<endl;
       // E_out<<step*tau<<" "<<average_spin<<endl;
@@ -1521,6 +1545,13 @@ void spin_system::run(){
       // out_data<<step*tau/T<<" "<<gs<<endl;
       // gs =0.;
     }
+    for (int i = 0; i < nofstates; i++) {
+      coefficient_return[i]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
+    }
+  }
+  ofstream Coefficient_out("coefficient.dat");
+  for (size_t i = 0; i < count; i++) {
+    Coefficient_out<<coefficient_return[i]<<endl;
   }
   ofstream output("output_ind.dat");
   output<<"Time Energy ";
@@ -1528,7 +1559,7 @@ void spin_system::run(){
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
   }
   output<<endl;
-  for (int step = 0; step < total_steps; step++){
+  for (int step = 0; step < total_steps+1; step++){
     output<<step*tau<<" "<<energy_return[step]<<" ";
     for (int i = 0; i < 3*N; i++) {
       output<<spin_return[step*3*N+i]<<" ";
