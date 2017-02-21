@@ -87,6 +87,7 @@ private:
   void double_spin_op_z(double);
   void set_initial_sys_state(char const *);
   double energy(double);
+  double energy_all(double)
   double spin(char,int);
   // void spin_allinone();
   void environment(int, double);
@@ -116,8 +117,8 @@ int main(int argc, char* argv[]){
   spin_system test;
   int N_sys=8;
   int N_env=8;
-  double T=50;
-  double tau=0.5;
+  double T=1000;
+  double tau=0.05;
   test.initialize(N_sys,N_env,T,tau);
 
   int N=N_sys+N_env;
@@ -235,7 +236,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*G is the global factor usually set between -1 and 1.*/
   G=1.0;
   Jenv_generate(N_env,G);//randomly generate J_env
-  G=0.001;
+  G=0.;
   Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
   environment(N_env,0.05);//get w[] and z[] with lapack diagonalization.
@@ -944,6 +945,119 @@ double spin_system::energy(double t){
   return average_energy;
 }
 
+/////////////////////////working on new functoin
+
+/* Calculating energy expectation value w/o construct matrix
+  Input:
+    t: the current time point
+  Output:
+    average_energy: the energy for the system
+  Side effect:
+    psi_tmp_real[],psi_tmp_imaginary[]
+  #: Only Calculate the energy for the environment's spins
+*/
+double spin_system::energy_all(double t){
+  for (int i = 0; i < nofstates; i++) {
+    psi_tmp_real[i]      = 0.;
+    psi_tmp_imaginary[i] = 0.;
+  }
+  double average_energy=0.;
+  double check_img=0.;
+
+
+  for (int k = 0; k < N; k++) {
+    int i1=(int) pow(2,k);
+
+    double hx=0.;
+    double hz=0.;
+    if (k>=N_sys) {
+      hx=0.
+      hz=0.
+    } else {
+      hx=-1*h_x_start*Gamma;
+      hz=-1*h_z[k]*Delta;
+    }
+    #pragma omp parallel for default(none) shared(i1,hx,hz)
+    for (int l = 0; l < nofstates; l+=2) {
+      int i2= l & i1;
+      int i = l -i2+i2/i1;
+      int j = i+i1;
+      /*sigma_x*/
+      psi_tmp_real[i]     += Gamma*hx*psi_real[j];
+      psi_tmp_imaginary[i]+= Gamma*hx*psi_imaginary[j];
+      psi_tmp_real[j]     += Gamma*hx*psi_real[i];
+      psi_tmp_imaginary[j]+= Gamma*hx*psi_imaginary[i];
+      /*sigma_z*/
+      psi_tmp_real[i]     += Delta*hz*psi_real[i];
+      psi_tmp_imaginary[i]+= Delta*hz*psi_imaginary[i];
+      psi_tmp_real[j]     += -Delta*hz*psi_real[j];
+      psi_tmp_imaginary[j]+= -Delta*hz*psi_imaginary[j];
+
+    }
+  }
+
+  for (int k = 0; k <N_sys ; k++) {
+    for (int l = k+1; l < N_sys; l++) {
+      double Jx=-1*J_x[k+l*N_sys];
+      double Jy=-1*J_y[k+l*N_sys];
+      double Jz=-1*J_z[k+l*N_sys];
+      if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
+        int nii=(int) pow(2,k);
+        int njj=(int) pow(2,l);
+        #pragma omp parallel for default(none) shared(nii,njj,Jx,Jy,Jz)
+        for (int m = 0; m < nofstates; m+=4) {
+          int n3 = m & njj;
+          int n2 = m-n3+(n3+n3)/njj;
+          int n1 = n2 & nii;
+          int n0 = n2-n1+n1/nii;
+          n1=n0+nii;
+          n2=n0+njj;
+          n3=n1+njj;
+          /*sigma_x*sigma_x*/
+          psi_tmp_real[n0]      += Delta*Jx*psi_real[n3];
+          psi_tmp_imaginary[n0] += Delta*Jx*psi_imaginary[n3];
+          psi_tmp_real[n1]      += Delta*Jx*psi_real[n2];
+          psi_tmp_imaginary[n1] += Delta*Jx*psi_imaginary[n2];
+          psi_tmp_real[n2]      += Delta*Jx*psi_real[n1];
+          psi_tmp_imaginary[n2] += Delta*Jx*psi_imaginary[n1];
+          psi_tmp_real[n3]      += Delta*Jx*psi_real[n0];
+          psi_tmp_imaginary[n3] += Delta*Jx*psi_imaginary[n0];
+          /*sigma_y*sigma_y*/
+          psi_tmp_real[n0]      += -Delta*Jy*psi_real[n3];
+          psi_tmp_imaginary[n0] += -Delta*Jy*psi_imaginary[n3];
+          psi_tmp_real[n1]      += Delta*Jy*psi_real[n2];
+          psi_tmp_imaginary[n1] += Delta*Jy*psi_imaginary[n2];
+          psi_tmp_real[n2]      += Delta*Jy*psi_real[n1];
+          psi_tmp_imaginary[n2] += Delta*Jy*psi_imaginary[n1];
+          psi_tmp_real[n3]      += -Delta*Jy*psi_real[n0];
+          psi_tmp_imaginary[n3] += -Delta*Jy*psi_imaginary[n0];
+          /*sigma_z*sigma_z*/
+          psi_tmp_real[n0]      += Delta*Jz*psi_real[n0];
+          psi_tmp_imaginary[n0] += Delta*Jz*psi_imaginary[n0];
+          psi_tmp_real[n1]      += -Delta*Jz*psi_real[n1];
+          psi_tmp_imaginary[n1] += -Delta*Jz*psi_imaginary[n1];
+          psi_tmp_real[n2]      += -Delta*Jz*psi_real[n2];
+          psi_tmp_imaginary[n2] += -Delta*Jz*psi_imaginary[n2];
+          psi_tmp_real[n3]      += Delta*Jz*psi_real[n3];
+          psi_tmp_imaginary[n3] += Delta*Jz*psi_imaginary[n3];
+
+
+        }
+      }
+    }
+  }
+  for (int i = 0; i < nofstates; ++i) {
+    average_energy += psi_real[i]*psi_tmp_real[i] - -1*psi_imaginary[i]*psi_tmp_imaginary[i];
+    check_img += psi_real[i]*psi_tmp_imaginary[i] + -1*psi_imaginary[i]*psi_tmp_real[i];
+  }
+  if (abs(check_img)>1e-13)
+    cout<<"Something went wrong in functoin energy()   "<<check_img<<endl;
+
+  return average_energy;
+}
+////////////////////////////////////////////////
+
+
 /* Calculating the spin expectation value
   Input:
     d: 'x' for sigma_x, 'y' for sigma_y, 'z' for sigma_z
@@ -1399,8 +1513,8 @@ void spin_system::run(){
 
   int total_steps=0;
   total_steps=(int) T/tau;
-  int count=0;
-
+  double* frequency;
+  frequency=new double [total_steps+1]();
   /////test not go over whole J again and again/////
   //////////////////////////////////////////////////
   // count_z=0;
@@ -1440,6 +1554,7 @@ void spin_system::run(){
     if (abs(w[E_i]-0)<1e-8)
       continue;
     direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
+
     for (int step = 0; step < total_steps+1; step++){ //+1 because i count the 0 point and the last poing as well.
 
       Delta=step*tau/T;
@@ -1456,6 +1571,11 @@ void spin_system::run(){
         spin_return[index+2]+=w[E_i]*spin('z',s);
       }
 
+      for (int i = 176; i < nofstates; i+=256) {
+        frequency[step]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
+      }
+
+
       single_spin_op(step*tau);
       double_spin_op_x(step*tau);
       double_spin_op_y(step*tau);
@@ -1471,17 +1591,17 @@ void spin_system::run(){
   }
   // output the return value: coefficient, energy expectation value, and spin expectation value.
   ofstream Coefficient_out("coefficient.dat");
-  for (size_t i = 0; i < count; i++) {
-    Coefficient_out<<coefficient_return[i]<<endl;
+  for (int i = 0; i < nofstates; i++) {
+    cout<<coefficient_return[i]<<endl;
   }
   ofstream output("output_ind.dat");
-  output<<"Time Energy ";
+  output<<"Time Energy Frequency ";
   for (int i = 0; i < N; i++) {
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
   }
   output<<endl;
   for (int step = 0; step < total_steps+1; step++){
-    output<<step*tau<<" "<<energy_return[step]<<" ";
+    output<<step*tau<<" "<<energy_return[step]<<" "<<frequency[step]<<" ";
     for (int i = 0; i < 3*N; i++) {
       output<<spin_return[step*3*N+i]<<" ";
     }
