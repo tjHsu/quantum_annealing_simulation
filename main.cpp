@@ -233,7 +233,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*G is the global factor usually set between -1 and 1.*/
   G=1.0;
   Jenv_generate(N_env,G);//randomly generate J_env
-  G=0.05;
+  G=0.5;
   Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
   environment(N_env,0.05);//get w[] and z[] with lapack diagonalization.
@@ -1078,9 +1078,9 @@ double spin_system::energy_se(double t){
   // for H_se, there are not single interaction. so no h_z,h_y,h_z
   for (int k = 0; k <N_sys ; k++) {
     for (int l = N-N_env; l < N; l++) {
-      double Jx=-1*Jx_env[k+(l-N_sys)*N_sys];
-      double Jy=-1*Jy_env[k+(l-N_sys)*N_sys];
-      double Jz=-1*Jz_env[k+(l-N_sys)*N_sys];
+      double Jx=-1*Jx_se[k+(l-N_sys)*N_sys];
+      double Jy=-1*Jy_se[k+(l-N_sys)*N_sys];
+      double Jz=-1*Jz_se[k+(l-N_sys)*N_sys];
       if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
         int nii=(int) pow(2,k);
         int njj=(int) pow(2,l);
