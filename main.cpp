@@ -34,15 +34,13 @@ private:
   double* J_x;
   double* J_y;
   double* J_z;
+  double G;
   double* Jx_env;
   double* Jy_env;
   double* Jz_env;
   double* Jx_se;
   double* Jy_se;
   double* Jz_se;
-
-
-  double G;
   double* h_x;
   double* h_y;
   double* h_z;
@@ -81,7 +79,6 @@ private:
   // double* psi_tmp_z_imaginary;
 
   void single_spin_op(double);
-  void double_spin_op(double);
   void double_spin_op_x(double);
   void double_spin_op_y(double);
   void double_spin_op_z(double);
@@ -92,23 +89,20 @@ private:
   void environment(int, double);
   void Jenv_generate(int,double);
   void Jse_generate(int, int, double);
-
-  void read(int,double*,char const *);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
   void direct_product(int, double*, double*, complex<double>*, double*, double*);
+
+  void read(int,double*,char const *);
+
 
 
 public:
   void initialize(int, int ,double ,double);
   void run();
 
-
   double* spin_return;
   double* energy_return;
   double* coefficient_return;
-
-
-
 };
 
 int main(int argc, char* argv[]){
@@ -174,39 +168,39 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     and the factor h for single spin Hamiltonian.
     J is for system itself, J_env is for environment itself, and J_se is the interaction
   */
-  J_x = new double [N_sys*N_sys];
-  J_y = new double [N_sys*N_sys];
-  J_z = new double [N_sys*N_sys];
-  Jx_env = new double [N_env*N_env];
-  Jy_env = new double [N_env*N_env];
-  Jz_env = new double [N_env*N_env];
-  Jx_se = new double [N_env*N_sys];
-  Jy_se = new double [N_env*N_sys];
-  Jz_se = new double [N_env*N_sys];
-  h_x = new double [N];
-  h_y = new double [N];
-  h_z = new double [N];
-    h_x_start=1;
-  for (int i = 0; i < N_sys*N_sys; i++){
-    J_x[i] = 0.;
-    J_y[i] = 0.;
-    J_z[i] = 0.;
-  }
-  for (int i = 0; i < N_env*N_env; i++){
-    Jx_env[i] = 0.;
-    Jy_env[i] = 0.;
-    Jz_env[i] = 0.;
-  }
-  for (int i = 0; i < N_env*N_sys; i++){
-    Jx_se[i] = 0.;
-    Jy_se[i] = 0.;
-    Jz_se[i] = 0.;
-  }
-  for (int i = 0; i < N; i++){
-    h_x[i]=0.;
-    h_y[i]=0.;
-    h_z[i]=0.;
-  }
+  J_x = new double [N_sys*N_sys]();
+  J_y = new double [N_sys*N_sys]();
+  J_z = new double [N_sys*N_sys]();
+  Jx_env = new double [N_env*N_env]();
+  Jy_env = new double [N_env*N_env]();
+  Jz_env = new double [N_env*N_env]();
+  Jx_se = new double [N_env*N_sys]();
+  Jy_se = new double [N_env*N_sys]();
+  Jz_se = new double [N_env*N_sys]();
+  h_x = new double [N]();
+  h_y = new double [N]();
+  h_z = new double [N]();
+  h_x_start= 1;
+  // for (int i = 0; i < N_sys*N_sys; i++){
+  //   J_x[i] = 0.;
+  //   J_y[i] = 0.;
+  //   J_z[i] = 0.;
+  // }
+  // for (int i = 0; i < N_env*N_env; i++){
+  //   Jx_env[i] = 0.;
+  //   Jy_env[i] = 0.;
+  //   Jz_env[i] = 0.;
+  // }
+  // for (int i = 0; i < N_env*N_sys; i++){
+  //   Jx_se[i] = 0.;
+  //   Jy_se[i] = 0.;
+  //   Jz_se[i] = 0.;
+  // }
+  // for (int i = 0; i < N; i++){
+  //   h_x[i]=0.;
+  //   h_y[i]=0.;
+  //   h_z[i]=0.;
+  // }
 
 
   read(N_sys*N_sys,J_z,"J2.txt");
@@ -221,21 +215,19 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_z,"h2.txt");
 
 
-
-
   /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
-  z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)];
-  for (int i = 0; i < (int)pow(2,N_env)*(int)pow(2,N_env); i++) {
-    z[i]=0;
-  }
-  w= new double [(int)pow(2,N_env)];
-  for (int i = 0; i < (int)pow(2,N_env); i++) {
-    w[i]=0;
-  }
+  z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
+  // for (int i = 0; i < (int)pow(2,N_env)*(int)pow(2,N_env); i++) {
+  //   z[i]=0;
+  // }
+  w= new double [(int)pow(2,N_env)]();
+  // for (int i = 0; i < (int)pow(2,N_env); i++) {
+  //   w[i]=0;
+  // }
   /*G is the global factor usually set between -1 and 1.*/
   G=1.0;
   Jenv_generate(N_env,G);//randomly generate J_env
-  G=0.001;
+  G=0.0001;
   Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
   environment(N_env,0.05);//get w[] and z[] with lapack diagonalization.
@@ -246,25 +238,25 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /* initialize the wave function in the ground state
   */
 
-  psi_real = new double [nofstates];
-  psi_imaginary = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-      psi_real[i]      = 0;
-      psi_imaginary[i] = 0;
-  }
-  psi_tmp_real = new double [nofstates];
-  psi_tmp_imaginary = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-    psi_tmp_real[i]      = 0;
-    psi_tmp_imaginary[i] = 0;
-  }
+  psi_real = new double [nofstates]();
+  psi_imaginary = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //     psi_real[i]      = 0;
+  //     psi_imaginary[i] = 0;
+  // }
+  psi_tmp_real = new double [nofstates]();
+  psi_tmp_imaginary = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //   psi_tmp_real[i]      = 0;
+  //   psi_tmp_imaginary[i] = 0;
+  // }
 
-  psi_sys_real = new double [(int)pow(2,N_sys)];
-  psi_sys_imaginary = new double [(int)pow(2,N_sys)];
-  for (int i = 0; i < (int)pow(2,N_sys); i++) {
-    psi_sys_real[i]      = 0;
-    psi_sys_imaginary[i] = 0;
-  }
+  psi_sys_real = new double [(int)pow(2,N_sys)]();
+  psi_sys_imaginary = new double [(int)pow(2,N_sys)]();
+  // for (int i = 0; i < (int)pow(2,N_sys); i++) {
+  //   psi_sys_real[i]      = 0;
+  //   psi_sys_imaginary[i] = 0;
+  // }
   set_initial_sys_state("allx");
 
   /* initialize the  matrix. We have two kind of Hamiltonian operator here.
@@ -272,18 +264,18 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     Second is the double spin operator, ds_operator.
     Ref. Article: Computational Methods for Simulating Quantum Computers euqation (68) & equation (70).
   */
-  ss_operator_real      = new double [4];
-  ss_operator_imaginary = new double [4];
-  ds_operator_real      = new double [8];
-  ds_operator_imaginary = new double [8];
-  for (int i = 0; i < 4; i++) {
-    ss_operator_real[i]      = 0;
-    ss_operator_imaginary[i] = 0;
-  }
-  for (int i = 0; i < 8; i++) {
-    ds_operator_real[i]      = 0;
-    ds_operator_imaginary[i] = 0;
-  }
+  ss_operator_real      = new double [4]();
+  ss_operator_imaginary = new double [4]();
+  ds_operator_real      = new double [8]();
+  ds_operator_imaginary = new double [8]();
+  // for (int i = 0; i < 4; i++) {
+  //   ss_operator_real[i]      = 0;
+  //   ss_operator_imaginary[i] = 0;
+  // }
+  // for (int i = 0; i < 8; i++) {
+  //   ds_operator_real[i]      = 0;
+  //   ds_operator_imaginary[i] = 0;
+  // }
 
   // /* uncommend if want to use spin_allinone(); */
   // psi_tmp_x_real=new double [nofstates];
@@ -296,18 +288,18 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
   /*set the return measuremt*/
   int total_steps=(int) (T/tau);
-  spin_return = new double [N*3*(total_steps+1)];//3 state for x,y,z
-  for (int i = 0; i < N*3*(total_steps+1); i++){
-    spin_return[i]=0.;
-  }
-  energy_return = new double [total_steps+1];
-  for (int i = 0; i < (total_steps+1); i++) {
-    energy_return[i]=0.;
-  }
-  coefficient_return = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-    coefficient_return[i]=0.;
-  }
+  spin_return = new double [N*3*(total_steps+1)]();//3 state for x,y,z
+  // for (int i = 0; i < N*3*(total_steps+1); i++){
+  //   spin_return[i]=0.;
+  // }
+  energy_return = new double [total_steps+1]();
+  // for (int i = 0; i < (total_steps+1); i++) {
+  //   energy_return[i]=0.;
+  // }
+  coefficient_return = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //   coefficient_return[i]=0.;
+  // }
 
 
   Gamma=1.; //time evolution of the initial Hamiltonian. Goes from 1 to 0
@@ -750,7 +742,7 @@ void spin_system::double_spin_op_z(double t){
           because of reading convenience I didn't do so.
         */
 
-        double a=J/1.;//4.;
+        double a=J;//4.;
         double b=0;//(J_x[k+l*N]-J_y[k+l*N])/1.;//4.;
         double c=0;//(J_x[k+l*N]+J_y[k+l*N])/1.;//4.;
 
@@ -1201,7 +1193,6 @@ void spin_system::environment(int N_env, double Temperature){
 
   //start preparing variable for lapack use
   //solving the energy to w[] array. then use it as the coefficient of |E_B>.
-  // double w[nofstates];
   int n=nofstates;
   double vl,vu;
   int il,iu;
@@ -1211,9 +1202,6 @@ void spin_system::environment(int N_env, double Temperature){
   for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
     ap[i]=H_env[i];
   }
-
-
-  // complex<double> z[nofstates*nofstates];
   int lda = nofstates;
   complex<double> work[2*nofstates];
   double rwork[7*nofstates];
@@ -1225,9 +1213,7 @@ void spin_system::environment(int N_env, double Temperature){
     cout<<"info = "<<info<<endl;
   }
   double sum=0.;
-  // cout<<w[0]<<endl;
   for (int i = 1; i < nofstates; i++) {
-    // cout<<w[i]<<endl;
     w[i]=exp(-1*(w[i]-w[0])/(Temperature*Boltzmann_const));
     sum+=w[i];
   }
