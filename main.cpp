@@ -1446,7 +1446,7 @@ double spin_system::spin(char d,int which_spin){
 // }
 
 
-/* Read in the number from a txt into an array
+/* Read in the mmber from a txt into an array
   Input:
     N: how many elements we want to read.
     Array: the array to store this elements
@@ -1496,26 +1496,30 @@ void spin_system::environment(int N_env, double Temperature){
   //Construct the H_env matrix for the later use for solving energy of the heat bath
   double Boltzmann_const= 1;//we use 1 here insted of 0.000086173303 ev/K;
   int nofstates=(int) pow(2,N_env);
-  double* H_env;
-  H_env=new double[nofstates*(nofstates+1)/2];
-  for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
-    H_env[i]=0;
-  }
-  // /* Since I don't set single spin magnetization for environment, I comment this part now */
-  // for (int k = 0; k < N_env; k++) {
-  //   int i1=(int) pow(2,k);
-  //   double h_x_init=0;
-  //   double h_z_tmp =0;
-  //
-  //   for (int l = 0; l < nofstates; l+=2) {
-  //     int i2= l & i1;
-  //     int i = l - i2 +i2/i1;
-  //     int j = i+i1;
-  //       H[i+i*(i+1)/2] += 1.*Delta*h_z_tmp;
-  //       H[j+j*(j+1)/2] += -1.*Delta*h_z_tmp;
-  //       H[i+j*(j+1)/2] += 1.*Gamma*h_x_init;
-  //   }
+  complex<double>* H_env;
+  H_env=new complex<double> [nofstates*(nofstates+1)/2]();
+  // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
+    // H_env[i]+=1.;
+    // cout<<H_env[i]<<endl;
   // }
+  /* 22.02.2017 Add single spin*/
+  for (int k = 0; k < N_env; k++) {
+    int i1=(int) pow(2,k);
+    double hx=-1*h_x[k+N_sys];
+    double hy=-1*h_y[k+N_sys];
+    double hz=-1*h_z[k+N_sys];
+    cout<<"hx hy hz ="<<hx<<" "<<hy<<" "<<hz<<" "<<endl;
+
+    for (int l = 0; l < nofstates; l+=2) {
+      int i2= l & i1;
+      int i = l - i2 +i2/i1;
+      int j = i+i1;
+        H_env[i+i*(i+1)/2] += hz;
+        H_env[j+j*(j+1)/2] += -hz;
+        H_env[i+j*(j+1)/2].imag() += -hy;
+        H_env[i+j*(j+1)/2] += hx;
+    }
+  }
 
   for (int k = 0; k < N_env; k++) {
     for (int l = k+1; l < N_env; l++) {
@@ -1575,6 +1579,11 @@ void spin_system::environment(int N_env, double Temperature){
   if(info!=0){
     cout<<"info = "<<info<<endl;
   }
+  ofstream eng_out("eng_spec.dat");
+  for (int i = 0; i < nofstates; i++) {
+    eng_out<<w[i]<<endl;
+  }
+
   double sum=0.;
   for (int i = 1; i < nofstates; i++) {
     w[i]=exp(-1*(w[i]-w[0])/(Temperature*Boltzmann_const));
