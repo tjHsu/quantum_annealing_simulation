@@ -119,7 +119,7 @@ int main(int argc, char* argv[]){
   double Time=atof(argv[1]);
   double tau=atof(argv[2]);
   double Temperature=atof(argv[3]);
-  test.initialize(N_sys,N_env,Time,tau,Temperature);
+  // test.initialize(N_sys,N_env,Time,tau,Temperature);
 
   int N=N_sys+N_env;
   int nofstates=(int) pow(2,N);
@@ -127,7 +127,21 @@ int main(int argc, char* argv[]){
   time_t start=time(0);
   clock_t t;
   t = clock();
+  double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
+  double J[6]={0,0.05,0.1,0.2,0.5,1};
+
+  for (int i = 0; i < 10; i++) {
+    cout<<T[i]<<endl;
+    for (int j = 0; j < 6; j++) {
+      cout<<J[j]<<endl;
+      test.initialize(N_sys,N_env,T[i],tau,Temperature);
+    }
+  }
+  cout<<"Wahahaha"<<endl;
+
   test.run();
+
+
   t =clock()-t;
   time_t end=time(0);
   double time=difftime(end,start);
@@ -299,25 +313,25 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*set the return measuremt*/
   int total_steps=(int) (T/tau);
 
-  spin_return = new double [N*3*(total_steps+1)];//3 state for x,y,z
-  for (int i = 0; i < N*3*(total_steps+1); i++){
-    spin_return[i]=0.;
-  }
-  energy_sys_return = new double [total_steps+1];
-  energy_env_return = new double [total_steps+1];
-  energy_se_return  = new double [total_steps+1];
-  energy_all_return = new double [total_steps+1];
+  spin_return = new double [N*3*(total_steps+1)]();//3 state for x,y,z
+  // for (int i = 0; i < N*3*(total_steps+1); i++){
+  //   spin_return[i]=0.;
+  // }
+  energy_sys_return = new double [total_steps+1]();
+  energy_env_return = new double [total_steps+1]();
+  energy_se_return  = new double [total_steps+1]();
+  energy_all_return = new double [total_steps+1]();
 
-  for (int i = 0; i < (total_steps+1); i++) {
-    energy_sys_return[i]=0.;
-    energy_env_return[i]=0.;
-    energy_se_return[i]=0.;
-    energy_all_return[i]=0.;
-  }
-  coefficient_return = new double [nofstates];
-  for (int i = 0; i < nofstates; i++) {
-    coefficient_return[i]=0.;
-  }
+  // for (int i = 0; i < (total_steps+1); i++) {
+  //   energy_sys_return[i]=0.;
+  //   energy_env_return[i]=0.;
+  //   energy_se_return[i]=0.;
+  //   energy_all_return[i]=0.;
+  // }
+  coefficient_return = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //   coefficient_return[i]=0.;
+  // }
 
 
   Gamma=1.; //time evolution of the initial Hamiltonian. Goes from 1 to 0
@@ -1579,7 +1593,7 @@ void spin_system::environment(int N_env, double Temperature){
   if(info!=0){
     cout<<"info = "<<info<<endl;
   }
-  ofstream eng_out("eng_spec.dat");
+  ofstream eng_out("output_energy_spectrum.dat");
   for (int i = 0; i < nofstates; i++) {
     eng_out<<w[i]<<endl;
   }
@@ -1596,8 +1610,8 @@ void spin_system::environment(int N_env, double Temperature){
     w[i]=w[i]/sum;
   }
 
-  ofstream envr_out("env_partition_factor.dat");
-  ofstream env_basis_out("env_basis.dat");
+  ofstream envr_out("output_env_partition_factor.dat");
+  ofstream env_basis_out("output_env_basis.dat");
   for (int i = 0; i < nofstates; i++) {
     envr_out<<w[i]<<endl;
   }
@@ -1663,7 +1677,7 @@ void spin_system::generate(int N, double* array_real, double* array_imagine, cha
   read(nos_env, env_real, filename_envr);
   read(nos_env, env_imag, filename_envi);
 
-  ofstream state_out("state_complete.dat");
+  ofstream state_out("output_state_complete.dat");
   for (int i = 0; i < nos_env; i++) {
     for (int j = 0; j < nos_sys; j++) {
       array_real[i*nos_sys+j]=env_real[i]*sys_real[j]-env_imag[i]*sys_imag[j];
@@ -1852,11 +1866,11 @@ void spin_system::run(){
     }
   }
   // output the return value: coefficient, energy expectation value, and spin expectation value.
-  ofstream Coefficient_out("coefficient.dat");
+  ofstream Coefficient_out("output_coefficient.dat");
   for (int i = 0; i < nofstates; i++) {
     Coefficient_out<<coefficient_return[i]<<endl;
   }
-  ofstream output("output_ind.dat");
+  ofstream output("output_general.dat");
   output<<"Time Energy_sys Energy_env Energy_se Energy_all Frequency ";
   for (int i = 0; i < N; i++) {
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
