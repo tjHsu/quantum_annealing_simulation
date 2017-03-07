@@ -59,16 +59,16 @@ private:
   double* psi_sys_real;
   double* psi_sys_imaginary;
 
-  // /*Not yet finished: optimizing by skipping the zero term.*/
-  // double* Jz_k_marked;
-  // double* Jz_l_marked;
-  // int count_z;
-  // double* Jy_k_marked;
-  // double* Jy_l_marked;
-  // int count_y;
-  // double* Jx_k_marked;
-  // double* Jx_l_marked;
-  // int count_x;
+  /*Not yet finished: optimizing by skipping the zero term.*/
+  double* Jz_k_marked;
+  double* Jz_l_marked;
+  int count_z;
+  double* Jy_k_marked;
+  double* Jy_l_marked;
+  int count_y;
+  double* Jx_k_marked;
+  double* Jx_l_marked;
+  int count_x;
 
   // /*uncommend if want to use spin_allinone();*/
   // double* psi_tmp_x_real;
@@ -548,8 +548,11 @@ void spin_system::single_spin_op(double t){
     psi_real[], psi_imaginary[],ds_operator_real[],ds_operator_imaginary[]
 */
 void spin_system::double_spin_op_x(double t){
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+  // for (int k = 0; k <N ; k++) {
+    // for (int l = k+1; l < N; l++) {
+  for (int i = 0; i<count_x; i++) {
+    int k=Jx_k_marked[i];
+    int l=Jx_l_marked[i];
       double J=0.;
       if (k>=N_sys) {
         J=Jx_env[(k-N_sys)+(l-N_sys)*N_env];
@@ -561,7 +564,7 @@ void spin_system::double_spin_op_x(double t){
   // for (int i = 0; i < count_x; i++) { //optimize use
     // int k=Jx_k_marked[i];
     // int l=Jx_l_marked[i];
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -655,8 +658,9 @@ void spin_system::double_spin_op_x(double t){
           psi_real[n3]      = psi_real_temp_n3;
           psi_imaginary[n3] = psi_imaginary_temp_n3;
         }
-      }
-    }
+      // ;}
+    // ;}
+  // ;}
   }
 }
 
@@ -1796,40 +1800,93 @@ void spin_system::run(){
   total_steps=(int) T/tau;
   double* frequency;
   frequency=new double [total_steps+1]();
-  /////test not go over whole J again and again/////
-  //////////////////////////////////////////////////
-  // count_z=0;
-  // count_y=0;
-  // count_x=0;
-  // Jz_k_marked=new double [N_sys*(N_sys+1)/2];
-  // Jz_l_marked=new double [N_sys*(N_sys+1)/2];
-  // Jy_k_marked=new double [N_sys*(N_sys+1)/2];
-  // Jy_l_marked=new double [N_sys*(N_sys+1)/2];
-  // Jx_k_marked=new double [N_sys*(N_sys+1)/2];
-  // Jx_l_marked=new double [N_sys*(N_sys+1)/2];
-  // for (int k = 0; k <N_sys ; k++) {
-  //   for (int l = k+1; l < N_sys; l++) {
-  //     if (abs(J_z[k+l*N_sys])>1e-15){
-  //       Jz_k_marked[count_z]=k;
-  //       Jz_l_marked[count_z]=l;
-  //       count_z+=1;
-  //     }
-  //     if (abs(J_y[k+l*N_sys])>1e-15){
-  //       Jy_k_marked[count_y]=k;
-  //       Jy_l_marked[count_y]=l;
-  //       count_y+=1;
-  //     }
-  //     if (abs(J_x[k+l*N_sys])>1e-15){
-  //       Jx_k_marked[count_x]=k;
-  //       Jx_l_marked[count_x]=l;
-  //       count_x+=1;
-  //     }
-  //   }
-  // }
-  //
-  // cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
-  //////////////////////////////////////////////////
-  //////////////////////////////////////////////////
+  ///test not go over whole J again and again/////
+  ////////////////////////////////////////////////
+  count_z=0;
+  count_y=0;
+  count_x=0;
+  Jz_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  Jz_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  Jy_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  Jy_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  Jx_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  Jx_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2];
+  for (int k = 0; k <(N_sys+N_env) ; k++) {
+    for (int l = k+1; l < (N_sys+N_env); l++) {
+      if(k>=N_sys){
+        if (abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
+          Jx_k_marked[count_x]=k;
+          Jx_l_marked[count_x]=l;
+          count_x+=1;
+        }
+        if (abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
+          Jy_k_marked[count_y]=k;
+          Jy_l_marked[count_y]=l;
+          count_y+=1;
+        }
+        if (abs(Jz_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
+          Jz_k_marked[count_x]=k;
+          Jz_l_marked[count_x]=l;
+          count_z+=1;
+        }
+
+      } else if (l>=N_sys && k<N_sys) {
+        if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15){
+          Jx_k_marked[count_x]=k;
+          Jx_l_marked[count_x]=l;
+          count_x+=1;
+        }
+        if (abs(Jy_se[k+(l-N_sys)*N_sys])>1e-15){
+          Jy_k_marked[count_y]=k;
+          Jy_l_marked[count_y]=l;
+          count_y+=1;
+        }
+        if (abs(Jz_se[k+(l-N_sys)*N_sys])>1e-15){
+          Jz_k_marked[count_x]=k;
+          Jz_l_marked[count_x]=l;
+          count_z+=1;
+        }
+
+      } else {
+        if (abs(J_x[k+l*N_sys])>1e-15){
+          Jx_k_marked[count_x]=k;
+          Jx_l_marked[count_x]=l;
+          count_x+=1;
+        }
+        if (abs(J_y[k+l*N_sys])>1e-15){
+          Jy_k_marked[count_y]=k;
+          Jy_l_marked[count_y]=l;
+          count_y+=1;
+        }
+        if (abs(J_z[k+l*N_sys])>1e-15){
+          Jz_k_marked[count_x]=k;
+          Jz_l_marked[count_x]=l;
+          count_z+=1;
+        }
+
+
+      }
+      // if (abs(J_z[k+l*(N_sys+N_env)])>1e-15){
+      //   Jz_k_marked[count_z]=k;
+      //   Jz_l_marked[count_z]=l;
+      //   count_z+=1;
+      // }
+      // if (abs(J_y[k+l*(N_sys+N_env)])>1e-15){
+      //   Jy_k_marked[count_y]=k;
+      //   Jy_l_marked[count_y]=l;
+      //   count_y+=1;
+      // }
+      // if (abs(J_x[k+l*(N_sys+N_env)])>1e-15){
+      //   Jx_k_marked[count_x]=k;
+      //   Jx_l_marked[count_x]=l;
+      //   count_x+=1;
+      // }
+    }
+  }
+
+  cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
+  ////////////////////////////////////////////////
+  ////////////////////////////////////////////////
   double norm=0.;
   for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
     direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
