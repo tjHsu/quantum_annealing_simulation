@@ -100,7 +100,7 @@ private:
 
 
 public:
-  void initialize(int, int ,double ,double, double );
+  void initialize(int, int ,double ,double, double, double );
   void run();
 
   double* spin_return;
@@ -109,6 +109,7 @@ public:
   double* energy_se_return;
   double* energy_all_return;
   double* coefficient_return;
+  double  success_probability_return;
 };
 
 int main(int argc, char* argv[]){
@@ -119,27 +120,38 @@ int main(int argc, char* argv[]){
   double Time=atof(argv[1]);
   double tau=atof(argv[2]);
   double Temperature=atof(argv[3]);
+  double G=atof(argv[4]);
   // test.initialize(N_sys,N_env,Time,tau,Temperature);
 
   int N=N_sys+N_env;
   int nofstates=(int) pow(2,N);
 
+  ofstream success_probability_out("output_JvsT");
   time_t start=time(0);
   clock_t t;
   t = clock();
   double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
   double J[6]={0,0.05,0.1,0.2,0.5,1};
-
+  success_probability_out<<"T ";
+  for (int i = 0; i < 6; i++) {
+    success_probability_out<<"J="<<J[i]<<" ";
+  }
+  success_probability_out<<endl;
   for (int i = 0; i < 10; i++) {
     cout<<T[i]<<endl;
+    success_probability_out<<T[i]<<" ";
     for (int j = 0; j < 6; j++) {
       cout<<J[j]<<endl;
-      test.initialize(N_sys,N_env,T[i],tau,Temperature);
+      test.initialize(N_sys,N_env,T[i],tau,Temperature,J[j]*10);
+      test.run();
+      success_probability_out<<test.success_probability_return<<" ";
+
     }
+    success_probability_out<<endl;
   }
   cout<<"Wahahaha"<<endl;
 
-  test.run();
+
 
 
   t =clock()-t;
@@ -176,8 +188,9 @@ int main(int argc, char* argv[]){
     N_env_user_defined: number of spins of environment
     T_user_defined: The Annealing time
     tau_user_defined: the timestep of simulation
+    G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined){
   double Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
@@ -185,7 +198,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   T = T_user_defined;
   tau = tau_user_defined;
   nofstates = (int) pow(2,N);// number of states construct by the number of total spins
-
+  G = G_user_defined;
   /* initialize the coupling factor J for double spin Hamiltonian,
     and the factor h for single spin Hamiltonian.
     J is for system itself, J_env is for environment itself, and J_se is the interaction
@@ -256,6 +269,16 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*the second parameter is Temperature*/
   environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
 
+  /* Change the global factor
+     Since the way i state in J_se is [-0.1, 0.1]
+     So I multiply 10 to [-1, 1]; 5 to [-0.5,0.5]... etc.
+  */
+  for (int i = 0; i < N_sys*N_env; i++) {
+    Jx_se[i]=Jx_se[i]*G;
+    Jy_se[i]=Jy_se[i]*G;
+    Jz_se[i]=Jz_se[i]*G;
+  }
+
 
 
 
@@ -321,7 +344,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   energy_env_return = new double [total_steps+1]();
   energy_se_return  = new double [total_steps+1]();
   energy_all_return = new double [total_steps+1]();
-
+  success_probability_return = 0;
   // for (int i = 0; i < (total_steps+1); i++) {
   //   energy_sys_return[i]=0.;
   //   energy_env_return[i]=0.;
@@ -1870,7 +1893,15 @@ void spin_system::run(){
   for (int i = 0; i < nofstates; i++) {
     Coefficient_out<<coefficient_return[i]<<endl;
   }
-  ofstream output("output_general.dat");
+
+
+  ostringstream strs;
+  strs <<"G"<<G<<"_"<<"T"<<T<<".dat";
+  string str = strs.str();
+  string strmain="output_general_";
+  strmain.append(str);
+  const char *testChars = strmain.c_str();
+  ofstream output(testChars);
   output<<"Time Energy_sys Energy_env Energy_se Energy_all Frequency ";
   for (int i = 0; i < N; i++) {
     output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
@@ -1888,5 +1919,5 @@ void spin_system::run(){
     }
     output<<endl;
   }
-
+  success_probability_return=frequency[total_steps];
 }
