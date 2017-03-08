@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
   int N=N_sys+N_env;
   int nofstates=(int) pow(2,N);
 
-  ofstream success_probability_out("output_JvsT");
+  ofstream success_probability_out("output_JvsT.dat");
   time_t start=time(0);
   clock_t t;
   t = clock();
@@ -149,7 +149,6 @@ int main(int argc, char* argv[]){
     }
     success_probability_out<<endl;
   }
-  cout<<"Wahahaha"<<endl;
 
 
 
@@ -671,8 +670,11 @@ void spin_system::double_spin_op_x(double t){
     psi_real[], psi_imaginary[],ds_operator_real[],ds_operator_imaginary[]
 */
 void spin_system::double_spin_op_y(double t){
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+  // for (int k = 0; k <N ; k++) {
+    // for (int l = k+1; l < N; l++) {
+  for (int i = 0; i < count_y; i++) {
+    int k=Jy_k_marked[i];
+    int l=Jy_l_marked[i];
       double J=0.;
       if (k>=N_sys) {
         J=Jy_env[(k-N_sys)+(l-N_sys)*N_env];
@@ -685,7 +687,7 @@ void spin_system::double_spin_op_y(double t){
   // for (int i = 0; i < count_y; i++) {
     // int k=Jy_k_marked[i];
     // int l=Jy_l_marked[i];
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
         /* update the double spin Hamiltonian matrix with t.
           In principal, we can save some computing time here,
@@ -780,8 +782,9 @@ void spin_system::double_spin_op_y(double t){
           psi_real[n3]      = psi_real_temp_n3;
           psi_imaginary[n3] = psi_imaginary_temp_n3;
         }
-      }
-    }
+      // ;}
+    // ;}
+  // ;}
   }
 }
 
@@ -793,8 +796,11 @@ void spin_system::double_spin_op_y(double t){
 */
 void spin_system::double_spin_op_z(double t){
 
-  for (int k = 0; k <N ; k++) {
-    for (int l = k+1; l < N; l++) {
+  // for (int k = 0; k <N ; k++) {
+    // for (int l = k+1; l < N; l++) {
+  for (int i = 0; i < count_z; i++) {
+    int k=Jz_k_marked[i];
+    int l=Jz_l_marked[i];
       double J=0.;
       if (k>=N_sys) {
         J=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
@@ -806,7 +812,7 @@ void spin_system::double_spin_op_z(double t){
   // for (int i = 0; i < count_z; i++) {
     // int k=Jz_k_marked[i];
     // int l=Jz_l_marked[i];
-      if(abs(J)>1e-15){
+      // if(abs(J)>1e-15){
 
 
         /* update the double spin Hamiltonian matrix with t.
@@ -903,8 +909,9 @@ void spin_system::double_spin_op_z(double t){
           psi_real[n3]      = psi_real_temp_n3;
           psi_imaginary[n3] = psi_imaginary_temp_n3;
         }
-      }
-    }
+      // ;}
+    // ;}
+  // ;}
   }
 }
 
@@ -1817,6 +1824,7 @@ void spin_system::run(){
         if (abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
           Jx_k_marked[count_x]=k;
           Jx_l_marked[count_x]=l;
+          Jx_J_marked[ocunt_x]=Jx_env[(k-N_sys)+(l-N_sys)*N_env];
           count_x+=1;
         }
         if (abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
