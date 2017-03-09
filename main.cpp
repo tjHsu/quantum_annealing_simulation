@@ -131,57 +131,70 @@ int main(int argc, char* argv[]){
   int nofstates=(int) pow(2,N);
 
   ofstream success_probability_out("output_JvsT.dat");
-  time_t start=time(0);
-  clock_t t;
-  t = clock();
+
   double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
   double J[6]={0,0.05,0.1,0.2,0.5,1};
-  success_probability_out<<"T ";
+  success_probability_out<<"Total_steps(tau=0.1) ";
   for (int i = 0; i < 6; i++) {
     success_probability_out<<"J="<<J[i]<<" ";
   }
   success_probability_out<<endl;
+
+  time_t start_all=time(0);
+  clock_t t_all;
+  t_all = clock();
   for (int i = 0; i < 10; i++) {
-    cout<<T[i]<<endl;
     success_probability_out<<T[i]<<" ";
     for (int j = 0; j < 6; j++) {
-      cout<<J[j]<<endl;
+      cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,T[i],tau,Temperature,J[j]*10);
+      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10);
       test.skip_zeroterm();
+
+      time_t start=time(0);
+      clock_t t;
+      t = clock();
       test.run();
+      t =clock()-t;
+      time_t end=time(0);
+      double time=difftime(end,start);
+      double norm=0.;
+      double sum_GS=0.;
+      double sum_ES=0.;
+      for(int i=0; i<nofstates;i++){
+        norm+=test.coefficient_return[i];
+        if (0==(i-119)%256) {
+          sum_GS+=test.coefficient_return[i];
+        } else {
+          sum_ES+=test.coefficient_return[i];
+        }
+      }
+
+
+      cout<<"This Run took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+      cout<<"costed me "<<time<<" second in real time"<<endl;
+      cout<<"norm after run = "<<norm<<endl;
+      cout<<"pobability of GS: "<<sum_GS<<endl;
+      cout<<"pobability of non-GS: "<<sum_ES<<endl;
+      cout<<endl;
+
+
       success_probability_out<<test.success_probability_return<<" ";
 
     }
     success_probability_out<<endl;
   }
 
+  t_all =clock()-t_all;
+  time_t end_all=time(0);
+  double time_all=difftime(end_all,start_all);
+  cout<<"My program overall took me "<<t_all<<" clicks ( "<<((float) t_all)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
+  cout<<"costed me "<<time_all<<" second in real time"<<endl;
 
 
 
-  t =clock()-t;
-  time_t end=time(0);
-  double time=difftime(end,start);
 
-  double norm=0.;
-  double sum_GS=0.;
-  double sum_ES=0.;
-  for(int i=0; i<nofstates;i++){
-    norm+=test.coefficient_return[i];
-    if (0==(i-119)%256) {
-      sum_GS+=test.coefficient_return[i];
-    } else {
-      sum_ES+=test.coefficient_return[i];
-    }
-  }
 
-  cout<<endl;
-  cout<<"It took me "<<t<<" clicks ( "<<((float) t)/CLOCKS_PER_SEC<<" processing seconds.)"<<endl;
-  cout<<"costed me "<<time<<" second in real time"<<endl;
-  cout<<"norm after run = "<<norm<<endl;
-  cout<<"pobability of GS: "<<sum_GS<<endl;
-  cout<<"pobability of non-GS: "<<sum_ES<<endl;
-  cout<<endl;
   cout<<"reutrn "<<0<<endl;
   return 0;
 }
@@ -1589,7 +1602,7 @@ void spin_system::environment(int N_env, double Temperature){
     double hx=-1*h_x[k+N_sys];
     double hy=-1*h_y[k+N_sys];
     double hz=-1*h_z[k+N_sys];
-    cout<<"hx hy hz ="<<hx<<" "<<hy<<" "<<hz<<" "<<endl;
+    // cout<<"hx hy hz ="<<hx<<" "<<hy<<" "<<hz<<" "<<endl;
 
     for (int l = 0; l < nofstates; l+=2) {
       int i2= l & i1;
@@ -1899,7 +1912,7 @@ void spin_system::skip_zeroterm(){
       }
     }
   }
- cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
+ cout<<"# of elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
 //
 }
 
@@ -1916,77 +1929,7 @@ void spin_system::run(){
   total_steps=(int) T/tau;
   double* frequency;
   frequency=new double [total_steps+1]();
-  // ///test not go over whole J again and again/////
-  // ////////////////////////////////////////////////
-  //
-  // for (int k = 0; k <(N_sys+N_env) ; k++) {
-  //   for (int l = k+1; l < (N_sys+N_env); l++) {
-  //     if(k>=N_sys){
-  //       if (abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
-  //         Jx_k_marked[count_x]=k;
-  //         Jx_l_marked[count_x]=l;
-  //         Jx_J_marked[count_x]=Jx_env[(k-N_sys)+(l-N_sys)*N_env];
-  //         count_x+=1;
-  //       }
-  //       if (abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
-  //         Jy_k_marked[count_y]=k;
-  //         Jy_l_marked[count_y]=l;
-  //         Jy_J_marked[count_y]=Jy_env[(k-N_sys)+(l-N_sys)*N_env];
-  //         count_y+=1;
-  //       }
-  //       if (abs(Jz_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15){
-  //         Jz_k_marked[count_z]=k;
-  //         Jz_l_marked[count_z]=l;
-  //         Jz_J_marked[count_z]=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
-  //         count_z+=1;
-  //       }
-  //
-  //     } else if (l>=N_sys && k<N_sys) {
-  //       if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15){
-  //         Jx_k_marked[count_x]=k;
-  //         Jx_l_marked[count_x]=l;
-  //         Jx_J_marked[count_x]=Jx_se[k+(l-N_sys)*N_sys];
-  //         count_x+=1;
-  //       }
-  //       if (abs(Jy_se[k+(l-N_sys)*N_sys])>1e-15){
-  //         Jy_k_marked[count_y]=k;
-  //         Jy_l_marked[count_y]=l;
-  //         Jy_J_marked[count_y]=Jy_se[k+(l-N_sys)*N_sys];
-  //         count_y+=1;
-  //       }
-  //       if (abs(Jz_se[k+(l-N_sys)*N_sys])>1e-15){
-  //         Jz_k_marked[count_z]=k;
-  //         Jz_l_marked[count_z]=l;
-  //         Jz_J_marked[count_z]=Jz_se[k+(l-N_sys)*N_sys];
-  //         count_z+=1;
-  //       }
-  //
-  //     } else {
-  //       if (abs(J_x[k+l*N_sys])>1e-15){
-  //         Jx_k_marked[count_x]=k;
-  //         Jx_l_marked[count_x]=l;
-  //         Jx_J_marked[count_x]=J_x[k+l*N_sys];
-  //         count_x+=1;
-  //       }
-  //       if (abs(J_y[k+l*N_sys])>1e-15){
-  //         Jy_k_marked[count_y]=k;
-  //         Jy_l_marked[count_y]=l;
-  //         Jy_J_marked[count_y]=J_y[k+l*N_sys];
-  //         count_y+=1;
-  //       }
-  //       if (abs(J_z[k+l*N_sys])>1e-15){
-  //         Jz_k_marked[count_z]=k;
-  //         Jz_l_marked[count_z]=l;
-  //         Jz_J_marked[count_z]=J_z[k+l*N_sys];
-  //         count_z+=1;
-  //       }
-  //     }
-  //   }
-  // }
-  //
-  // cout<<"Elements in Jx, Jy, and Jz: "<<count_x<<" "<<count_y<<" "<<count_z<<" "<<endl;
-  // ////////////////////////////////////////////////
-  // ////////////////////////////////////////////////
+
   double norm=0.;
   for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
     direct_product(E_i,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
@@ -2002,7 +1945,7 @@ void spin_system::run(){
   for (int i = 0; i < nofstates; i++) {
     coefficient_return[i]=0.;
   }
-
+  cout<<"START RUNNING!"<<endl;
   for (int E_i = 0; E_i < (int) pow(2,N_env); E_i++) {
     if (abs(w[E_i]-0)<1e-8)
       continue;
@@ -2016,16 +1959,16 @@ void spin_system::run(){
       if (step%500==0)
         cout<<"E_i= "<<E_i<<", w[]= "<<w[E_i]<<", step: "<<step<<endl;
 
-      energy_sys_return[step]+=w[E_i]*energy(step*tau);
-      energy_env_return[step]+=w[E_i]*energy_env(step*tau);
-      energy_se_return[step]+=w[E_i]*energy_se(step*tau);
-      energy_all_return[step]+=w[E_i]*energy_all(step*tau);
-      for (int s = 0; s < N; s++) {
-        int index=step*N*3+s*3;
-        spin_return[index]  +=w[E_i]*spin('x',s);
-        spin_return[index+1]+=w[E_i]*spin('y',s);
-        spin_return[index+2]+=w[E_i]*spin('z',s);
-      }
+      // energy_sys_return[step]+=w[E_i]*energy(step*tau);
+      // energy_env_return[step]+=w[E_i]*energy_env(step*tau);
+      // energy_se_return[step]+=w[E_i]*energy_se(step*tau);
+      // energy_all_return[step]+=w[E_i]*energy_all(step*tau);
+      // for (int s = 0; s < N; s++) {
+      //   int index=step*N*3+s*3;
+      //   spin_return[index]  +=w[E_i]*spin('x',s);
+      //   spin_return[index+1]+=w[E_i]*spin('y',s);
+      //   spin_return[index+2]+=w[E_i]*spin('z',s);
+      // }
 
       for (int i = 119; i < nofstates; i+=256) {
         frequency[step]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
@@ -2045,6 +1988,12 @@ void spin_system::run(){
       coefficient_return[i]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
     }
   }
+  cout<<"END RUNNING"<<endl;
+  norm=0.;
+  for (int i = 0; i < nofstates; i++) {
+    norm+=coefficient_return[i];
+  }
+  cout<<"norm after run: "<<norm<<endl;
   // output the return value: coefficient, energy expectation value, and spin expectation value.
   ofstream Coefficient_out("output_coefficient.dat");
   for (int i = 0; i < nofstates; i++) {
@@ -2053,7 +2002,7 @@ void spin_system::run(){
 
 
   ostringstream strs;
-  strs <<"G"<<(G/10.)<<"_"<<"T"<<T<<".dat";
+  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";
   string str = strs.str();
   string strmain="output_general_";
   strmain.append(str);
