@@ -73,12 +73,7 @@ private:
   double* Jx_J_marked;
   int count_x;
 
-  /* variable for getting enrgy spectrum */
-  complex<double>* H;
-  complex<double>* psi;
-  void full_diag_single_spin_op(double);
-  void full_diag_double_spin_op(double);
-  void full_diag_run();
+
 
   // /*uncommend if want to use spin_allinone();*/
   // double* psi_tmp_x_real;
@@ -128,10 +123,11 @@ int main(int argc, char* argv[]){
   spin_system test;
   int N_sys=8;
   int N_env=8;
-  double Time=atof(argv[1]);
+  //double Time=atof(argv[1]);
+  double J_start=atoi(argv[1]);
   double tau=atof(argv[2]);
   double Temperature=atof(argv[3]);
-  double G=atof(argv[4]);
+  //double G=atof(argv[4]);
   // test.initialize(N_sys,N_env,Time,tau,Temperature);
 
   int N=N_sys+N_env;
@@ -142,7 +138,7 @@ int main(int argc, char* argv[]){
   double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
   double J[6]={0,0.05,0.1,0.2,0.5,1};
   success_probability_out<<"Total_steps(tau=0.1) ";
-  for (int i = 0; i < 6; i++) {
+  for (int i = J_start; i < J_start+1; i++) {
     success_probability_out<<"J="<<J[i]<<" ";
   }
   success_probability_out<<endl;
@@ -152,7 +148,7 @@ int main(int argc, char* argv[]){
   t_all = clock();
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
-    for (int j = 0; j < 6; j++) {
+    for (int j = J_start; j < J_start+1; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
       test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10);
@@ -2033,64 +2029,4 @@ void spin_system::run(){
     output<<endl;
   }
   success_probability_return=frequency[total_steps];
-}
-
-void spin_system::full_diag_single_spin_op(double t){
-  for (int k = 0; k < N; k++) {
-    int i1=(int) pow(2,k);
-    double h_x_init=-1.;
-    double h_z_tmp =-1*h_z[k];
-
-    for (int l = 0; l < nofstates; l+=2) {
-      int i2= l & i1;
-      int i = l - i2 +i2/i1;
-      int j = i+i1;
-        H[i+i*(i+1)/2] += 1.*Delta*h_z_tmp;
-        H[j+j*(j+1)/2] += -1.*Delta*h_z_tmp;
-        H[i+j*(j+1)/2] += 1.*Gamma*h_x_init;
-        H[i+j*(j+1)/2].imag() += 1.*Gamma*h_y_tmp;
-    }
-  }
-}
-void spin_system::full_diag_double_spin_op(double t){
-  for (int k = 0; k < N; k++) {
-    for (int l = k+1; l < N; l++) {
-      double Jx=-1*J_x[k+l*N];
-      double Jy=-1*J_y[k+l*N];
-      double Jz=-1*J_z[k+l*N];
-      if(Jx!=0||Jy!=0||Jz!=0){
-        int nii=(int) pow(2,k);
-        int njj=(int) pow(2,l);
-        for (int m=0; m<nofstates; m+=4) {
-          int n3 = m & njj;
-          int n2 = m-n3+(n3+n3)/njj;
-          int n1 = n2 & nii;
-          int n0 = n2 - n1+n1/nii;
-          n1=n0+nii;
-          n2=n0+njj;
-          n3=n1+njj;
-
-          H[n0+n0*(n0+1)/2] += 1.*Delta*Jz;
-          H[n1+n1*(n1+1)/2] +=-1.*Delta*Jz;
-          H[n2+n2*(n2+1)/2] +=-1.*Delta*Jz;
-          H[n3+n3*(n3+1)/2] += 1.*Delta*Jz;
-
-          H[n0+n3*(n3+1)/2] += 1.*Delta*Jx;
-          H[n1+n2*(n2+1)/2] += 1.*Delta*Jx;
-          // H[n2+n1*(n1+1)/2] += 1.*Delta*Jx;
-          // H[n3+n0*(n0+1)/2] += 1.*Delta*Jx;
-
-          H[n0+n3*(n3+1)/2] +=-1.*Delta*Jy;
-          H[n1+n2*(n2+1)/2] += 1.*Delta*Jy;
-          // H[n2+n1*(n1+1)/2] += 1.*Delta*Jy;
-          // H[n3+n0*(n0+1)/2] +=-1.*Delta*Jy;
-
-        }
-      }
-    }
-  }
-
-}
-void spin_system::full_diag_run(){
-
 }
