@@ -79,7 +79,12 @@ private:
   double* Jz_l_eng_marked;
   double* Jz_J_eng_marked;
   int count_z_eng;
-
+  double* J_k_combine_marked;
+  double* J_l_combine_marked;
+  double* Jx_J_combine_marked;
+  double* Jy_J_combine_marked;
+  double* Jz_J_combine_marked;
+  int count_combine;
 
   // /*uncommend if want to use spin_allinone();*/
   // double* psi_tmp_x_real;
@@ -389,24 +394,49 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*set array for skip_zeroterm()*/
   // count_h=0;
   // h_k_marked=new double [N_sys+N_env]();
+  int count=0;
+  for (int k = 0; k <(N_sys+N_env) ; k++) {
+    for (int l = k+1; l < (N_sys+N_env); l++) {
+      if(k>=N_sys){
+        if (abs(Jz_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15||abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15||abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15) {
+          count+=1;
+        }
+      } else if (l>=N_sys && k<N_sys) {
+        if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15||abs(Jy_se[k+(l-N_sys)*N_sys])>1e-15||abs(Jz_se[k+(l-N_sys)*N_sys])>1e-15) {
+          count+=1;
+        }
+      } else {
+        if (abs(J_x[k+l*N_sys])>1e-15||abs(J_y[k+l*N_sys])>1e-15||abs(J_z[k+l*N_sys])>1e-15) {
+          count+=1;
+        }
+      }
+    }
+  }
+
   count_z_eng=0;
-  Jz_k_eng_marked=new double [(N_sys)*((N_sys)+1)/2]();
-  Jz_l_eng_marked=new double [(N_sys)*((N_sys)+1)/2]();
-  Jz_J_eng_marked=new double [(N_sys)*((N_sys)+1)/2]();
+  Jz_k_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
+  Jz_l_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
+  Jz_J_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
   count_z=0;
   count_y=0;
   count_x=0;
-  Jz_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jz_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jz_J_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jy_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jy_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jy_J_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jx_k_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jx_l_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
-  Jx_J_marked=new double [(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  J_k_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  J_l_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  count_combine=0;
   /**/
-
+  cout<<"count="<<count<<endl;
   Gamma=1.; //time evolution of the initial Hamiltonian. Goes from 1 to 0
   Delta=1.; //time evolution of the desired Hamiltonian. Goes from 0 to 1
 
@@ -1961,6 +1991,14 @@ void spin_system::skip_zeroterm(){
           Jz_J_marked[count_z]=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
           count_z+=1;
         }
+        if (abs(Jz_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15&&abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15&&abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15) {
+          J_k_combine_marked[count_combine]=k;
+          J_l_combine_marked[count_combine]=l;
+          Jx_J_combine_marked[count_combine]=Jx_env[(k-N_sys)+(l-N_sys)*N_env];
+          Jy_J_combine_marked[count_combine]=Jy_env[(k-N_sys)+(l-N_sys)*N_env];
+          Jz_J_combine_marked[count_combine]=Jz_env[(k-N_sys)+(l-N_sys)*N_env];
+          count_combine+=1;
+        }
 
       } else if (l>=N_sys && k<N_sys) {
         if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15){
@@ -1980,6 +2018,14 @@ void spin_system::skip_zeroterm(){
           Jz_l_marked[count_z]=l;
           Jz_J_marked[count_z]=Jz_se[k+(l-N_sys)*N_sys];
           count_z+=1;
+        }
+        if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15&&abs(Jy_se[k+(l-N_sys)*N_sys])>1e-15&&abs(Jz_se[k+(l-N_sys)*N_sys])>1e-15) {
+          J_k_combine_marked[count_combine]=k;
+          J_l_combine_marked[count_combine]=l;
+          Jx_J_combine_marked[count_combine]=Jx_se[k+(l-N_sys)*N_sys];
+          Jy_J_combine_marked[count_combine]=Jy_se[k+(l-N_sys)*N_sys];
+          Jz_J_combine_marked[count_combine]=Jz_se[k+(l-N_sys)*N_sys];
+          count_combine+=1;
         }
 
       } else {
@@ -2004,6 +2050,14 @@ void spin_system::skip_zeroterm(){
           Jz_l_eng_marked[count_z_eng]=l;
           Jz_J_eng_marked[count_z_eng]=J_z[k+l*N_sys];
           count_z_eng+=1;
+        }
+        if (abs(J_x[k+l*N_sys])>1e-15&&abs(J_y[k+l*N_sys])>1e-15&&abs(J_z[k+l*N_sys])>1e-15) {
+          J_k_combine_marked[count_combine]=k;
+          J_l_combine_marked[count_combine]=l;
+          Jx_J_combine_marked[count_combine]=J_x[k+l*N_sys];
+          Jy_J_combine_marked[count_combine]=J_y[k+l*N_sys];
+          Jz_J_combine_marked[count_combine]=J_z[k+l*N_sys];
+          count_combine+=1;
         }
       }
     }
@@ -2207,12 +2261,12 @@ void spin_system::exp_appr_op(double t, int M){
   //       Jy=-1*J_y[k+l*N_sys]*Delta;
   //       Jz=-1*J_z[k+l*N_sys]*Delta;
   //     }
-  for (int i = 0; i<count_z; i++) {
-    int k=Jz_k_marked[i];
-    int l=Jz_l_marked[i];
-    double Jx=-1*Jx_J_marked[i];
-    double Jy=-1*Jy_J_marked[i];
-    double Jz=-1*Jz_J_marked[i];
+  for (int i = 0; i<count_combine; i++) {
+    int k=J_k_combine_marked[i];
+    int l=J_l_combine_marked[i];
+    double Jx=-1*Jx_J_combine_marked[i];
+    double Jy=-1*Jy_J_combine_marked[i];
+    double Jz=-1*Jz_J_combine_marked[i];
     if(l<N_sys){
       Jx=Delta*-1*Jx;
       Jy=Delta*-1*Jy;
@@ -2328,12 +2382,14 @@ void spin_system::random_wavef_run(){
     // }
 
     for (int i = 119; i < nofstates; i+=256) {
-      frequency[step]=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
+      frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=50;
+    int M=15;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
-
+      if (i%1000==0) {
+        cout<<"i="<<i<<endl;
+      }
     }
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
