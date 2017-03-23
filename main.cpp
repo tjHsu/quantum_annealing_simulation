@@ -13,9 +13,9 @@
 #include "spin_system.h"
 
 using namespace std;
-#define MKL_Complex16 complex<double>
-#include "omp.h"
-#include "mkl.h"
+// #define MKL_Complex16 complex<double>
+// #include "omp.h"
+// #include "mkl.h"
 
 
 int main(int argc, char* argv[]){
