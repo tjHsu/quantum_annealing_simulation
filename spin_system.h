@@ -120,7 +120,7 @@ private:
 
 public:
   void skip_zeroterm();
-  void initialize(int, int ,double ,double, double, double, int );
+  void initialize(int, int ,double ,double, double, double, int, int);
   void run();
   void random_wavef_run();
 

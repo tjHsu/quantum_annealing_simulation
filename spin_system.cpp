@@ -8,7 +8,7 @@
     tau_user_defined: the timestep of simulation
     G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
@@ -69,6 +69,14 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_x,"h4x.txt");
   read(N,h_y,"h4y.txt");
 
+  ostringstream strs;
+  strs<<"J"<<(J_index)<<".txt";
+  string str=strs.str();
+  const char *testChars = str.c_str();
+  read(N_sys*N_sys,J_z,testChars);
+
+
+
   // for (int i = 0; i < N_env; i++) {
   //   for (int j = 0; j < N_env; j++) {
   //     cout<<Jx_env[i*N_env+j]<<" ";
@@ -88,7 +96,6 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   // G=0.05;
   // Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
-  cout<<"HAHAHA2222"<<endl;
   if (1==env_on) {
     /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
     z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
@@ -96,7 +103,6 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
   }
 
-cout<<"HAHAHA222"<<endl;
   /* Change the global factor
      Since the way i state in J_se is [-0.1, 0.1]
      So I multiply 10 to [-1, 1]; 5 to [-0.5,0.5]... etc.
@@ -1549,9 +1555,7 @@ void spin_system::environment(int N_env, double Temperature){
   int il,iu;
   double abstol = 2*DLAMCH("S");
   int m;
-cout<<"HAHAHAinside"<<endl;
   // complex<double> ap[nofstates*(nofstates+1)/2];
-cout<<"HAHAHAinside2"<<endl;
   // for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
   //   ap[i]=H_env[i];
   // }
@@ -1564,7 +1568,6 @@ cout<<"HAHAHAinside2"<<endl;
   int info;
 
   zhpevx("Vector","All","Upper", &n, H_env, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
-cout<<"HAHAHAinside3"<<endl;
   if(info!=0){
     cout<<"info = "<<info<<endl;
   }
