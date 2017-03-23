@@ -309,7 +309,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   // G=0.05;
   // Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
-  cout<<"HAHAHA"<<endl;
+  cout<<"HAHAHA2222"<<endl;
   if (1==env_on) {
     /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
     z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
