@@ -119,7 +119,7 @@ private:
 
 public:
   void skip_zeroterm();
-  void initialize(int, int ,double ,double, double, double );
+  void initialize(int, int ,double ,double, double, double, int );
   void run();
   void random_wavef_run();
 
@@ -160,18 +160,22 @@ int main(int argc, char* argv[]){
   time_t start_all=time(0);
   clock_t t_all;
   t_all = clock();
+  int env_on=1;
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
     for (int j = J_start; j < J_start+1; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10);
+      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on);
+      if (1==env_on) {
+        env_on=0;
+      }
       test.skip_zeroterm();
 
       time_t start=time(0);
       clock_t t;
       t = clock();
-      test.random_wavef_run();
+      test.run();
       t =clock()-t;
       time_t end=time(0);
       double time=difftime(end,start);
@@ -225,7 +229,7 @@ int main(int argc, char* argv[]){
     tau_user_defined: the timestep of simulation
     G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
@@ -286,13 +290,16 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_x,"h4x.txt");
   read(N,h_y,"h4y.txt");
 
-
-  /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
-  z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
-  // for (int i = 0; i < (int)pow(2,N_env)*(int)pow(2,N_env); i++) {
-  //   z[i]=0;
+  // for (int i = 0; i < N_env; i++) {
+  //   for (int j = 0; j < N_env; j++) {
+  //     cout<<Jx_env[i*N_env+j]<<" ";
+  //   }
+  //   cout<<endl;
   // }
-  w= new double [(int)pow(2,N_env)]();
+
+
+
+
   // for (int i = 0; i < (int)pow(2,N_env); i++) {
   //   w[i]=0;
   // }
@@ -302,8 +309,15 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   // G=0.05;
   // Jse_generate(N_sys,N_env,G);//randomly generate J_se
   /*the second parameter is Temperature*/
-  environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
+  cout<<"HAHAHA"<<endl;
+  if (1==env_on) {
+    /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
+    z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
+    w= new double [(int)pow(2,N_env)]();
+    environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
+  }
 
+cout<<"HAHAHA222"<<endl;
   /* Change the global factor
      Since the way i state in J_se is [-0.1, 0.1]
      So I multiply 10 to [-1, 1]; 5 to [-0.5,0.5]... etc.
@@ -439,6 +453,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   cout<<"count="<<count<<endl;
   Gamma=1.; //time evolution of the initial Hamiltonian. Goes from 1 to 0
   Delta=1.; //time evolution of the desired Hamiltonian. Goes from 0 to 1
+
 
 }
 
@@ -1691,11 +1706,13 @@ void spin_system::environment(int N_env, double Temperature){
     // cout<<H_env[i]<<endl;
   // }
   /* 22.02.2017 Add single spin*/
+
   for (int k = 0; k < N_env; k++) {
     int i1=(int) pow(2,k);
     double hx=-1*h_x[k+N_sys];
     double hy=-1*h_y[k+N_sys];
     double hz=-1*h_z[k+N_sys];
+
     // cout<<"hx hy hz ="<<hx<<" "<<hy<<" "<<hz<<" "<<endl;
 
     for (int l = 0; l < nofstates; l+=2) {
@@ -1753,17 +1770,22 @@ void spin_system::environment(int N_env, double Temperature){
   int il,iu;
   double abstol = 2*DLAMCH("S");
   int m;
-  complex<double> ap[nofstates*(nofstates+1)/2];
-  for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
-    ap[i]=H_env[i];
-  }
+cout<<"HAHAHAinside"<<endl;
+  // complex<double> ap[nofstates*(nofstates+1)/2];
+cout<<"HAHAHAinside2"<<endl;
+  // for (int i = 0; i < nofstates*(nofstates+1)/2; i++){
+  //   ap[i]=H_env[i];
+  // }
+
   int lda = nofstates;
   complex<double> work[2*nofstates];
   double rwork[7*nofstates];
   int iwork[5*nofstates];
   int ifail[nofstates];
   int info;
-  zhpevx("Vector","All","Upper", &n, ap, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
+
+  zhpevx("Vector","All","Upper", &n, H_env, &vl, &vu, &il, &iu, &abstol, &m, w, z, &lda, work, rwork, iwork, ifail, &info );
+cout<<"HAHAHAinside3"<<endl;
   if(info!=0){
     cout<<"info = "<<info<<endl;
   }
@@ -1828,10 +1850,21 @@ void spin_system::sumaverage(int n, double* array_real, double* array_imagine, c
   int nos_sys=(int) pow(2,N_sys);
   int nos_env=(int) pow(2,N_env);
   complex<double> array_env[nos_env];
-  double normalize_factor=sqrt((1./pow(2,N_env)));
+  double normalize_factor[nos_env];
+  srand(time(NULL));
+  double norm=0;
+  for (int i = 0; i < nos_env; i++) {
+    normalize_factor[i]=((double) rand()/RAND_MAX);
+    norm+=normalize_factor[i]*normalize_factor[i];
+  }
+  norm=1./sqrt(norm);
+  for (int i = 0; i < nos_env; i++) {
+    normalize_factor[i]=normalize_factor[i]*norm;
+  }
+  // normalize_factor=sqrt((1./pow(2,N_env)));
   for (int i = 0; i < nos_env; i++) {
     for (int j = 0; j < nos_env; j++) {
-      array_env[i]+=normalize_factor* env[j*nos_env+i];
+      array_env[i]+=normalize_factor[j]* env[j*nos_env+i];
     }
   }
   for (int i = 0; i < nos_env; i++) {
@@ -2387,9 +2420,6 @@ void spin_system::random_wavef_run(){
     int M=15;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
-      if (i%1000==0) {
-        cout<<"i="<<i<<endl;
-      }
     }
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
