@@ -49,10 +49,11 @@ int main(int argc, char* argv[]){
   int env_on=1;
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
-    for (int j = 1; j < 101; j++) {
+    for (int j = 5; j < 6; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J_index= "<<j<<"."<<endl;
 
       test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,0, env_on, j);
+
       if (1==env_on) {
         env_on=0;
       }

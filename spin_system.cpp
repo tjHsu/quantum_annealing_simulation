@@ -95,11 +95,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   }
 
 
-  // ostringstream strs;
-  // strs<<"J"<<(J_index)<<".txt";
-  // string str=strs.str();
-  // const char *testChars = str.c_str();
-  // read(N_sys*N_sys,J_z,testChars);
+
 
 
 
@@ -267,6 +263,9 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
 
 }
+
+
+
 
 
 /* Set up the initial basis state
@@ -1964,6 +1963,8 @@ void spin_system::run(){
       for (int i = gs_sol; i < nofstates; i+=256) {
         frequency[step]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
       }
+
+      // frequency[step]+=w[E_i]*(psi_real[gs_sol]*psi_real[gs_sol]+psi_imaginary[gs_sol]*psi_imaginary[gs_sol]);
 
 
       single_spin_op(step*tau);
