@@ -24,6 +24,8 @@ private:
   int N_env;
   double T;
   double Temperature;
+  int index;//index for the input data
+
   double tau;
   int nofstates;
   int nofstates_sys;
@@ -120,7 +122,8 @@ private:
 
 public:
   void skip_zeroterm();
-  void initialize(int, int ,double ,double, double, double, int, int);
+  void initialize(int, int ,double ,double, double, double, int);
+  void initialize_8spin(int, int ,double ,double, double, double, int, int);
   void run();
   void random_wavef_run();
 
@@ -131,4 +134,5 @@ public:
   double* energy_all_return;
   double* coefficient_return;
   double  success_probability_return;
+  int gs_sol;//the solution for this input
 };

@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
 
   spin_system test;
   int N_sys=8;
-  int N_env=8;
+  int N_env=0;
   //double Time=atof(argv[1]);
   double J_start=atoi(argv[1]);
   double tau=atof(argv[2]);
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
     for (int j = J_start; j < J_start+1; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on, 5);
+      test.initialize_8spin(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on, 5);
       if (1==env_on) {
         env_on=0;
       }
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
       double sum_ES=0.;
       for(int i=0; i<nofstates;i++){
         norm+=test.coefficient_return[i];
-        if (0==(i-119)%256) {
+        if (0==(i-test.gs_sol)%256) {
           sum_GS+=test.coefficient_return[i];
         } else {
           sum_ES+=test.coefficient_return[i];

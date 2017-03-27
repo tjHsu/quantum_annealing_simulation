@@ -8,7 +8,7 @@
     tau_user_defined: the timestep of simulation
     G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
@@ -69,11 +69,20 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   read(N,h_x,"h4x.txt");
   read(N,h_y,"h4y.txt");
 
-  ostringstream strs;
-  strs<<"J"<<(J_index)<<".txt";
-  string str=strs.str();
-  const char *testChars = str.c_str();
-  read(N_sys*N_sys,J_z,testChars);
+  // ostringstream strs;
+  // strs<<"J"<<(J_index)<<".txt";
+  // string str=strs.str();
+  // const char *testChars = str.c_str();
+  // cout<<testChars<<endl;
+  // read(N_sys*N_sys,J_z,testChars);
+  //
+  // ostringstream strs_h;
+  // strs_h<<"h"<<(J_index)<<".txt";
+  // string str_h=strs_h.str();
+  // const char *testChars_h = str_h.c_str();
+  // cout<<testChars_h<<endl;
+  // read(N_sys*N_sys,J_z,testChars_h);
+
 
 
 
@@ -241,6 +250,280 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
 
 }
+
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+/* Initialize the annealing system with 8 spins.
+  Input:
+    N_sys_user_defined: number of spins of system
+    N_env_user_defined: number of spins of environment
+    T_user_defined: The Annealing time
+    tau_user_defined: the timestep of simulation
+    G_user_defined: the global factor for Jse
+*/
+void spin_system::initialize_8spin(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index){
+  Temperature = Temperature_user_defined;
+  index = J_index;
+  N_sys = N_sys_user_defined;
+  N_env = N_env_user_defined;
+  N = N_sys+N_env;
+  T = T_user_defined;
+  tau = tau_user_defined;
+  nofstates = (int) pow(2,N);// number of states construct by the number of total spins
+  G = G_user_defined;
+  /* initialize the coupling factor J for double spin Hamiltonian,
+    and the factor h for single spin Hamiltonian.
+    J is for system itself, J_env is for environment itself, and J_se is the interaction
+  */
+  J_x = new double [N_sys*N_sys]();
+  J_y = new double [N_sys*N_sys]();
+  J_z = new double [N_sys*N_sys]();
+  Jx_env = new double [N_env*N_env]();
+  Jy_env = new double [N_env*N_env]();
+  Jz_env = new double [N_env*N_env]();
+  Jx_se = new double [N_env*N_sys]();
+  Jy_se = new double [N_env*N_sys]();
+  Jz_se = new double [N_env*N_sys]();
+  h_x = new double [N]();
+  h_y = new double [N]();
+  h_z = new double [N]();
+  gs_sol=0;
+  h_x_start= 1;
+  // for (int i = 0; i < N_sys*N_sys; i++){
+  //   J_x[i] = 0.;
+  //   J_y[i] = 0.;
+  //   J_z[i] = 0.;
+  // }
+  // for (int i = 0; i < N_env*N_env; i++){
+  //   Jx_env[i] = 0.;
+  //   Jy_env[i] = 0.;
+  //   Jz_env[i] = 0.;
+  // }
+  // for (int i = 0; i < N_env*N_sys; i++){
+  //   Jx_se[i] = 0.;
+  //   Jy_se[i] = 0.;
+  //   Jz_se[i] = 0.;
+  // }
+  // for (int i = 0; i < N; i++){
+  //   h_x[i]=0.;
+  //   h_y[i]=0.;
+  //   h_z[i]=0.;
+  // }
+
+
+  // read(N_sys*N_sys,J_z,"J4.txt");
+  // read(N_sys*N_sys,J_x,"J4x.txt");
+  // read(N_sys*N_sys,J_y,"J4y.txt");
+  // read(N_env*N_env,Jx_env,"J4x_env.txt");
+  // read(N_env*N_env,Jy_env,"J4y_env.txt");
+  // read(N_env*N_env,Jz_env,"J4z_env.txt");
+  // read(N_sys*N_env,Jx_se,"J4x_se.txt");
+  // read(N_sys*N_env,Jy_se,"J4y_se.txt");
+  // read(N_sys*N_env,Jz_se,"J4z_se.txt");
+  // read(N,h_z,"h4.txt");
+  // read(N,h_x,"h4x.txt");
+  // read(N,h_y,"h4y.txt");
+
+  ostringstream strs;
+  strs<<"/home/ting-jui/Documents/2016_WS_MT/product_formula/8spin/J"<<(J_index)<<".txt";
+  string str=strs.str();
+  const char *testChars = str.c_str();
+  cout<<testChars<<endl;
+  read(N_sys*N_sys,J_z,testChars);
+
+  ostringstream strs_h;
+  strs_h<<"/home/ting-jui/Documents/2016_WS_MT/product_formula/8spin/h"<<(J_index)<<".txt";
+  string str_h=strs_h.str();
+  const char *testChars_h = str_h.c_str();
+  cout<<testChars_h<<endl;
+  read(N_sys*N_sys,J_z,testChars_h);
+
+  ostringstream strs_sol;
+  strs_sol<<"/home/ting-jui/Documents/2016_WS_MT/product_formula/8spin/s"<<(J_index)<<".txt";
+  string str_sol=strs_sol.str();
+  const char *testChars_sol = str_sol.c_str();
+  cout<<testChars_sol<<endl;
+  ifstream myfile;
+  myfile.open(testChars_sol);
+  if(!myfile.is_open()){
+    cout<<"Unable to open the file "<<testChars_sol<<endl;
+  }
+  myfile>>gs_sol;
+  myfile.close();
+  // J_z[gs_sol];
+  // cout<<"HAHAHAHA"<<gs_sol<<endl;
+  // read(N_sys*N_sys,gs_sol,testChars_sol);
+
+
+
+  // for (int i = 0; i < N_env; i++) {
+  //   for (int j = 0; j < N_env; j++) {
+  //     cout<<Jx_env[i*N_env+j]<<" ";
+  //   }
+  //   cout<<endl;
+  // }
+
+
+
+
+  // for (int i = 0; i < (int)pow(2,N_env); i++) {
+  //   w[i]=0;
+  // }
+  /*G is the global factor usually set between -1 and 1.*/
+  // G=1.0;
+  // Jenv_generate(N_env,G);//randomly generate J_env
+  // G=0.05;
+  // Jse_generate(N_sys,N_env,G);//randomly generate J_se
+  /*the second parameter is Temperature*/
+  if (1==env_on) {
+    /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
+    z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
+    w= new double [(int)pow(2,N_env)]();
+    environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
+  }
+
+  /* Change the global factor
+     Since the way i state in J_se is [-0.1, 0.1]
+     So I multiply 10 to [-1, 1]; 5 to [-0.5,0.5]... etc.
+  */
+  for (int i = 0; i < N_sys*N_env; i++) {
+    Jx_se[i]=Jx_se[i]*G;
+    Jy_se[i]=Jy_se[i]*G;
+    Jz_se[i]=Jz_se[i]*G;
+  }
+
+
+
+
+  /* initialize the wave function in the ground state
+  */
+
+  psi_real = new double [nofstates]();
+  psi_imaginary = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //     psi_real[i]      = 0;
+  //     psi_imaginary[i] = 0;
+  // }
+  psi_tmp_real = new double [nofstates]();
+  psi_tmp_imaginary = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //   psi_tmp_real[i]      = 0;
+  //   psi_tmp_imaginary[i] = 0;
+  // }
+
+  psi_sys_real = new double [(int)pow(2,N_sys)]();
+  psi_sys_imaginary = new double [(int)pow(2,N_sys)]();
+  // for (int i = 0; i < (int)pow(2,N_sys); i++) {
+  //   psi_sys_real[i]      = 0;
+  //   psi_sys_imaginary[i] = 0;
+  // }
+  set_initial_sys_state("allx");
+
+  /* initialize the  matrix. We have two kind of Hamiltonian operator here.
+    First is the single spin operator, ss_operator.
+    Second is the double spin operator, ds_operator.
+    Ref. Article: Computational Methods for Simulating Quantum Computers euqation (68) & equation (70).
+  */
+  ss_operator_real      = new double [4]();
+  ss_operator_imaginary = new double [4]();
+  ds_operator_real      = new double [8]();
+  ds_operator_imaginary = new double [8]();
+  // for (int i = 0; i < 4; i++) {
+  //   ss_operator_real[i]      = 0;
+  //   ss_operator_imaginary[i] = 0;
+  // }
+  // for (int i = 0; i < 8; i++) {
+  //   ds_operator_real[i]      = 0;
+  //   ds_operator_imaginary[i] = 0;
+  // }
+
+  // /* uncommend if want to use spin_allinone(); */
+  // psi_tmp_x_real=new double [nofstates];
+  // psi_tmp_x_imaginary=new double [nofstates];
+  // psi_tmp_y_real=new double [nofstates];
+  // psi_tmp_y_imaginary=new double [nofstates];
+  // psi_tmp_z_real=new double [nofstates];
+  // psi_tmp_z_imaginary=new double [nofstates];
+
+
+  /*set the return measuremt*/
+  int total_steps=(int) (T/tau);
+
+  spin_return = new double [N*3*(total_steps+1)]();//3 state for x,y,z
+  // for (int i = 0; i < N*3*(total_steps+1); i++){
+  //   spin_return[i]=0.;
+  // }
+  energy_sys_return = new double [total_steps+1]();
+  energy_env_return = new double [total_steps+1]();
+  energy_se_return  = new double [total_steps+1]();
+  energy_all_return = new double [total_steps+1]();
+  success_probability_return = 0;
+  // for (int i = 0; i < (total_steps+1); i++) {
+  //   energy_sys_return[i]=0.;
+  //   energy_env_return[i]=0.;
+  //   energy_se_return[i]=0.;
+  //   energy_all_return[i]=0.;
+  // }
+  coefficient_return = new double [nofstates]();
+  // for (int i = 0; i < nofstates; i++) {
+  //   coefficient_return[i]=0.;
+  // }
+
+  /*set array for skip_zeroterm()*/
+  // count_h=0;
+  // h_k_marked=new double [N_sys+N_env]();
+  int count=0;
+  for (int k = 0; k <(N_sys+N_env) ; k++) {
+    for (int l = k+1; l < (N_sys+N_env); l++) {
+      if(k>=N_sys){
+        if (abs(Jz_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15||abs(Jy_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15||abs(Jx_env[(k-N_sys)+(l-N_sys)*N_env])>1e-15) {
+          count+=1;
+        }
+      } else if (l>=N_sys && k<N_sys) {
+        if (abs(Jx_se[k+(l-N_sys)*N_sys])>1e-15||abs(Jy_se[k+(l-N_sys)*N_sys])>1e-15||abs(Jz_se[k+(l-N_sys)*N_sys])>1e-15) {
+          count+=1;
+        }
+      } else {
+        if (abs(J_x[k+l*N_sys])>1e-15||abs(J_y[k+l*N_sys])>1e-15||abs(J_z[k+l*N_sys])>1e-15) {
+          count+=1;
+        }
+      }
+    }
+  }
+
+  count_z_eng=0;
+  Jz_k_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
+  Jz_l_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
+  Jz_J_eng_marked=new double [count];//[(N_sys)*((N_sys)+1)/2]();
+  count_z=0;
+  count_y=0;
+  count_x=0;
+  Jz_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_k_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_l_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_J_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  J_k_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  J_l_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jx_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jy_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  Jz_J_combine_marked=new double [count];//[(N_sys+N_env)*((N_sys+N_env)+1)/2]();
+  count_combine=0;
+  /**/
+  cout<<"count="<<count<<endl;
+  Gamma=1.; //time evolution of the initial Hamiltonian. Goes from 1 to 0
+  Delta=1.; //time evolution of the desired Hamiltonian. Goes from 0 to 1
+
+
+}
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+
 
 
 /* Set up the initial basis state
@@ -1935,9 +2218,11 @@ void spin_system::run(){
       //   spin_return[index+2]+=w[E_i]*spin('z',s);
       // }
 
-      for (int i = 119; i < nofstates; i+=256) {
+      for (int i = gs_sol; i < nofstates; i+=256) {
         frequency[step]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
       }
+
+      // frequency[step]+=w[E_i]*(psi_real[gs_sol]*psi_real[gs_sol]+psi_imaginary[gs_sol]*psi_imaginary[gs_sol]);
 
 
       single_spin_op(step*tau);
@@ -2196,7 +2481,7 @@ void spin_system::random_wavef_run(){
     //   spin_return[index+2]=spin('z',s);
     // }
 
-    for (int i = 119; i < nofstates; i+=256) {
+    for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
     int M=15;
