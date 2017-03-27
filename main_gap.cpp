@@ -35,7 +35,8 @@ int main(int argc, char* argv[]){
 
   ofstream success_probability_out("output_JvsT.dat");
 
-  double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
+  // double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
+  double T[8]={1.25e1,1.5e1,1.75e1,2.25e1,2.5e1,2.75e1,3.25e1,3.5e1};
   // double J[6]={0,0.05,0.1,0.2,0.5,1};
   success_probability_out<<"Total_steps(tau=0.1) ";
   // for (int i = J_start; i < J_start+1; i++) {
@@ -47,9 +48,9 @@ int main(int argc, char* argv[]){
   clock_t t_all;
   t_all = clock();
   int env_on=1;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 8; i++) {
     success_probability_out<<T[i]<<" ";
-    for (int j = 5; j < 6; j++) {
+    for (int j = 1; j < 101; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J_index= "<<j<<"."<<endl;
 
       test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,0, env_on, j);
