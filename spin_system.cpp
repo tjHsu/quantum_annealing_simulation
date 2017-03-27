@@ -8,13 +8,14 @@
     tau_user_defined: the timestep of simulation
     G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index_user_defined){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
   N = N_sys+N_env;
   T = T_user_defined;
   tau = tau_user_defined;
+  J_index=J_index_user_defined;
   nofstates = (int) pow(2,N);// number of states construct by the number of total spins
   G = G_user_defined;
   /* initialize the coupling factor J for double spin Hamiltonian,
@@ -34,46 +35,71 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   h_y = new double [N]();
   h_z = new double [N]();
   h_x_start= 1;
-  // for (int i = 0; i < N_sys*N_sys; i++){
-  //   J_x[i] = 0.;
-  //   J_y[i] = 0.;
-  //   J_z[i] = 0.;
-  // }
-  // for (int i = 0; i < N_env*N_env; i++){
-  //   Jx_env[i] = 0.;
-  //   Jy_env[i] = 0.;
-  //   Jz_env[i] = 0.;
-  // }
-  // for (int i = 0; i < N_env*N_sys; i++){
-  //   Jx_se[i] = 0.;
-  //   Jy_se[i] = 0.;
-  //   Jz_se[i] = 0.;
-  // }
-  // for (int i = 0; i < N; i++){
-  //   h_x[i]=0.;
-  //   h_y[i]=0.;
-  //   h_z[i]=0.;
-  // }
+
+  /*
+  J_index ==0: for test case. can chage file here
+  J_index !=0: for regular case. change from for loop in main.cpp
+  */
+  if (0==J_index) {
+    read(N_sys*N_sys,J_z,"J4.txt");
+    read(N_sys*N_sys,J_x,"J4x.txt");
+    read(N_sys*N_sys,J_y,"J4y.txt");
+    read(N_env*N_env,Jx_env,"J4x_env.txt");
+    read(N_env*N_env,Jy_env,"J4y_env.txt");
+    read(N_env*N_env,Jz_env,"J4z_env.txt");
+    read(N_sys*N_env,Jx_se,"J4x_se.txt");
+    read(N_sys*N_env,Jy_se,"J4y_se.txt");
+    read(N_sys*N_env,Jz_se,"J4z_se.txt");
+    read(N,h_z,"h4.txt");
+    read(N,h_x,"h4x.txt");
+    read(N,h_y,"h4y.txt");
+    gs_sol=119;
+    cout<<"For J_index = 0, solution state set to : "<<gs_sol<<endl;
+  } else {
+    cout<<"For J_index != 0, read in file from the path: ";
+
+    ostringstream index_strs;
+    index_strs<<J_index;;
+    string index_str=index_strs.str();
+    cout<<index_str<<endl;
+
+    string J_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/J");
+    string h_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/h");
+    string s_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/s");
+    string tmp_str;
+
+    tmp_str=J_str+index_str+".txt";
+
+    // ostringstream strs;
+    // strs<<"/home0/t.hsu/Documents/2016_WS_MT/8spin/J"<<(J_index)<<".txt";
+    // string str=strs.str();
+    const char *testChars = tmp_str.c_str();
+    cout<<testChars<<endl;
+    read(N_sys*N_sys,J_z,testChars);
+    tmp_str=h_str+index_str+".txt";
+    testChars=tmp_str.c_str();
+    cout<<testChars<<endl;
+    read(N_sys,h_z,testChars);
+    // string teststr=to_string(1);
+    tmp_str=s_str+index_str+".txt";
+    testChars=tmp_str.c_str();
+    cout<<testChars<<endl;
+    ifstream myfile;
+    myfile.open(testChars);
+    if(!myfile.is_open()){
+      cout<<"Unable to open the file: "<<testChars<<endl;
+    }
+    myfile>>gs_sol;
+    myfile.close();
+
+  }
 
 
-  read(N_sys*N_sys,J_z,"J4.txt");
-  read(N_sys*N_sys,J_x,"J4x.txt");
-  read(N_sys*N_sys,J_y,"J4y.txt");
-  read(N_env*N_env,Jx_env,"J4x_env.txt");
-  read(N_env*N_env,Jy_env,"J4y_env.txt");
-  read(N_env*N_env,Jz_env,"J4z_env.txt");
-  read(N_sys*N_env,Jx_se,"J4x_se.txt");
-  read(N_sys*N_env,Jy_se,"J4y_se.txt");
-  read(N_sys*N_env,Jz_se,"J4z_se.txt");
-  read(N,h_z,"h4.txt");
-  read(N,h_x,"h4x.txt");
-  read(N,h_y,"h4y.txt");
-
-  ostringstream strs;
-  strs<<"J"<<(J_index)<<".txt";
-  string str=strs.str();
-  const char *testChars = str.c_str();
-  read(N_sys*N_sys,J_z,testChars);
+  // ostringstream strs;
+  // strs<<"J"<<(J_index)<<".txt";
+  // string str=strs.str();
+  // const char *testChars = str.c_str();
+  // read(N_sys*N_sys,J_z,testChars);
 
 
 
@@ -1935,7 +1961,7 @@ void spin_system::run(){
       //   spin_return[index+2]+=w[E_i]*spin('z',s);
       // }
 
-      for (int i = 119; i < nofstates; i+=256) {
+      for (int i = gs_sol; i < nofstates; i+=256) {
         frequency[step]+=w[E_i]*(psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i]);
       }
 
@@ -1967,7 +1993,8 @@ void spin_system::run(){
 
 
   ostringstream strs;
-  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";
+  // strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
+  strs <<"H"<<J_index<<"_"<<"Ts"<<(T*10)<<".dat";//output name for multiple output for landau ziener comparison
   string str = strs.str();
   string strmain="output_general_";
   strmain.append(str);
@@ -2196,7 +2223,7 @@ void spin_system::random_wavef_run(){
     //   spin_return[index+2]=spin('z',s);
     // }
 
-    for (int i = 119; i < nofstates; i+=256) {
+    for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
     int M=15;
@@ -2227,7 +2254,8 @@ void spin_system::random_wavef_run(){
     Coefficient_out<<coefficient_return[i]<<endl;
   }
   ostringstream strs;
-  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";
+  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
+
   string str = strs.str();
   string strmain="output_general_";
   strmain.append(str);

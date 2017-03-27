@@ -87,6 +87,8 @@ private:
   double* Jz_J_combine_marked;
   int count_combine;
 
+  int J_index;
+
   // /*uncommend if want to use spin_allinone();*/
   // double* psi_tmp_x_real;
   // double* psi_tmp_x_imaginary;
@@ -131,4 +133,5 @@ public:
   double* energy_all_return;
   double* coefficient_return;
   double  success_probability_return;
+  int gs_sol;
 };
