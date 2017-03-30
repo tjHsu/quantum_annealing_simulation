@@ -1997,7 +1997,7 @@ void spin_system::run(){
   // strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
   strs <<"H"<<J_index<<"_"<<"Ts"<<(T*10)<<".dat";//output name for multiple output for landau ziener comparison
   string str = strs.str();
-  string strmain="output_general_";
+  string strmain="/home/zam/t.hsu/Documents/2016_WS_MT/Product_formula/gap_result/output_general_";
   strmain.append(str);
   const char *testChars = strmain.c_str();
   ofstream output(testChars);

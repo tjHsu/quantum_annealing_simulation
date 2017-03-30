@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
     for (int j = J_start; j < J_start+1; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on);
+      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0);
       if (1==env_on) {
         env_on=0;
       }
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
       time_t start=time(0);
       clock_t t;
       t = clock();
-      test.run();
+      test.random_wavef_run();
       t =clock()-t;
       time_t end=time(0);
       double time=difftime(end,start);
