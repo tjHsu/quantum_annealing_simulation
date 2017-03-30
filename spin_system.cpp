@@ -1510,6 +1510,7 @@ void spin_system::environment(int N_env, double Temperature){
   double Boltzmann_const= 1;//we use 1 here insted of 0.000086173303 ev/K;
   int nofstates=(int) pow(2,N_env);
   complex<double>* H_env;
+  complex<double> ImgNum(0,1);
   H_env=new complex<double> [nofstates*(nofstates+1)/2]();
   // for (int i = 0; i < nofstates*(nofstates+1)/2; i++) {
     // H_env[i]+=1.;
@@ -1531,7 +1532,7 @@ void spin_system::environment(int N_env, double Temperature){
       int j = i+i1;
         H_env[i+i*(i+1)/2] += hz;
         H_env[j+j*(j+1)/2] += -hz;
-        H_env[i+j*(j+1)/2].imag() += -hy;
+        H_env[i+j*(j+1)/2] += -hy*ImgNum;
         H_env[i+j*(j+1)/2] += hx;
     }
   }
@@ -1657,16 +1658,47 @@ void spin_system::sumaverage(int n, double* array_real, double* array_imagine, c
   int nos_sys=(int) pow(2,N_sys);
   int nos_env=(int) pow(2,N_env);
   complex<double> array_env[nos_env];
-  double normalize_factor[nos_env];
+  complex<double> normalize_factor[nos_env];
+  complex<double> ImgNum(0,1);
+  //prepare gaussian distribution
+
+  normal_distribution<double> distribution(0.0,1./3);//sqrt2/2
+
+
   srand(time(NULL));
-  double norm=0;
+  double Norm=0;
+  double rand_tmp=distribution(generator);
   for (int i = 0; i < nos_env; i++) {
-    normalize_factor[i]=((double) rand()/RAND_MAX);
-    norm+=normalize_factor[i]*normalize_factor[i];
+    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+    //   rand_tmp=distribution(generator);
+    //   // cout<<"insied while loop for Gaussain random"<<endl;
+    // }
+    normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
+    rand_tmp=distribution(generator);
+    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+    //   rand_tmp=distribution(generator);
+    //   // cout<<"insied while loop for Gaussain random"<<endl;
+    // }
+    normalize_factor[i]+=rand_tmp*ImgNum;
+    // cout<<normalize_factor[i]<<endl;
+    Norm+=norm(normalize_factor[i]);
   }
-  norm=1./sqrt(norm);
+  // test gaussian
+  // int test[20]={0};
+  // for (int i = 0; i < nos_env; i++) {
+  //   test[int((normalize_factor[i].imag()+1)/0.1)]+=1;
+  // }
+  // for (int i = 0; i < 20; i++) {
+  //   cout<<(i-10)<<":#"<<test[i];
+  //   for (int j = 0; j < test[i]; j++)
+  //     cout<<"+";
+  //   cout<<endl;
+  // }
+  // test end
+
+  Norm=1./sqrt(Norm);
   for (int i = 0; i < nos_env; i++) {
-    normalize_factor[i]=normalize_factor[i]*norm;
+    normalize_factor[i]=normalize_factor[i]*Norm;
   }
   // normalize_factor=sqrt((1./pow(2,N_env)));
   for (int i = 0; i < nos_env; i++) {
@@ -2047,9 +2079,9 @@ void spin_system::exp_appr_op(double t, int M){
       hz=-1*h_z[k]*Delta;
     }
 
-    if(abs(hx)>1e-15||abs(hz)>1e-15||abs(hy)>1e-15){
+    if(abs(hx)>1e-15||abs(hy)>1e-15||abs(hz)>1e-15){
       int i1=(int) pow(2,k);
-      #pragma omp parallel for default(none) shared(i1,hx,hz,hy)
+      #pragma omp parallel for default(none) shared(i1,hx,hy,hz)
       for (int l = 0; l < nofstates; l+=2) {
         int i2= l & i1;
         int i = l -i2+i2/i1;
@@ -2188,15 +2220,20 @@ void spin_system::exp_appr_op(double t, int M){
     // }
   }
   for (int i = 0; i < nofstates; i++) {
+    // if (Delta>0.8)
+    //   cout<<i<<"( "<<psi_tmp_real[i]<<", "<<psi_tmp_imaginary[i]<<")"<<endl;
     psi_real[i]=1*psi_real[i]+(-(1./T)*psi_tmp_real[i]/(2.*M));
     psi_imaginary[i]=1*psi_imaginary[i]+(-(1./T)*psi_tmp_imaginary[i]/(2.*M));
+
   }
+
 }
 void spin_system::random_wavef_run(){
   int total_steps=(int) T/tau;
   double* frequency= new double [total_steps+1]();
 
   double norm=0;
+
   sumaverage(0,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
   for (int i = 0; i < nofstates; i++) {
     coefficient_return[i]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
@@ -2227,7 +2264,7 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=15;
+    int M=150;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
@@ -2239,8 +2276,10 @@ void spin_system::random_wavef_run(){
     double_spin_op_x(step*tau);
     single_spin_op(step*tau);
 
+
   }
   for (int i = 0; i < nofstates; i++) {
+
     coefficient_return[i]=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
   }
   cout<<"END RUNNING"<<endl;

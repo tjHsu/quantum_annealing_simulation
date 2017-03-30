@@ -20,6 +20,7 @@ using namespace std;
 
 class spin_system {
 private:
+  default_random_engine generator;
   int N;
   int N_sys;
   int N_env;
