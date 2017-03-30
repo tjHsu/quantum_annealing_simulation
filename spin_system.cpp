@@ -2143,9 +2143,9 @@ void spin_system::exp_appr_op(double t, int M){
     double Jy=-1*Jy_J_combine_marked[i];
     double Jz=-1*Jz_J_combine_marked[i];
     if(l<N_sys){
-      Jx=Delta*-1*Jx;
-      Jy=Delta*-1*Jy;
-      Jz=Delta*-1*Jz;
+      Jx=Delta*Jx;
+      Jy=Delta*Jy;
+      Jz=Delta*Jz;
     }
 
       // if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
@@ -2264,10 +2264,10 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=150;
-    for (int i = 0; i < M; i++) {
-      exp_appr_op(step*tau,M);
-    }
+    // int M=150;
+    // for (int i = 0; i < M; i++) {
+    //   exp_appr_op(step*tau,M);
+    // }
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
