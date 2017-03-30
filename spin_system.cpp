@@ -2222,8 +2222,8 @@ void spin_system::exp_appr_op(double t, int M){
   for (int i = 0; i < nofstates; i++) {
     // if (Delta>0.8)
     //   cout<<i<<"( "<<psi_tmp_real[i]<<", "<<psi_tmp_imaginary[i]<<")"<<endl;
-    psi_real[i]=1*psi_real[i]+(-(1./T)*psi_tmp_real[i]/(2.*M));
-    psi_imaginary[i]=1*psi_imaginary[i]+(-(1./T)*psi_tmp_imaginary[i]/(2.*M));
+    psi_real[i]=1*psi_real[i]+(-(1./Temperature)*psi_tmp_real[i]/(2.*M));
+    psi_imaginary[i]=1*psi_imaginary[i]+(-(1./Temperature)*psi_tmp_imaginary[i]/(2.*M));
 
   }
 
@@ -2264,10 +2264,10 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    // int M=150;
-    // for (int i = 0; i < M; i++) {
-    //   exp_appr_op(step*tau,M);
-    // }
+    int M=15;
+    for (int i = 0; i < M; i++) {
+      exp_appr_op(step*tau,M);
+    }
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
