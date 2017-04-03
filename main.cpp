@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
   ofstream success_probability_out("output_JvsT.dat");
 
   double T[10]={1e1,1e2,2e2,5e2,1e3,2e3,5e3,1e4,2e4,1e5};
-  double J[6]={0.05,0,0.1,0.2,0.5,1};
+  double J[6]={0,0.05,0.1,0.2,0.5,1};
   success_probability_out<<"Total_steps(tau=0.1) ";
   for (int i = J_start; i < J_start+6; i++) {
     success_probability_out<<"J="<<J[i]<<" ";

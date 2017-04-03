@@ -2061,8 +2061,10 @@ void spin_system::run(){
 */
 void spin_system::exp_appr_op(double t, int M){
   for (int i = 0; i < nofstates; i++) {
-    psi_tmp_real[i]=psi_real[i];
-    psi_tmp_imaginary[i]=psi_imaginary[i];
+    // psi_tmp_real[i]=psi_real[i];
+    // psi_tmp_imaginary[i]=psi_imaginary[i];
+    psi_tmp_real[i]=0;
+    psi_tmp_imaginary[i]=0;
   }
   for (int k = 0; k < N; k++) {
     double hx=0.;
@@ -2103,19 +2105,26 @@ void spin_system::exp_appr_op(double t, int M){
         // psi_tmp_real[j]     += -hz*psi_real[j];
         // psi_tmp_imaginary[j]+= -hz*psi_imaginary[j];
 
-        double psi_real_temp_i      = 0;
-        double psi_imaginary_temp_i = 0;
-        double psi_real_temp_j      = 0;
-        double psi_imaginary_temp_j = 0;
-        // combine to one
-        psi_real_temp_i      = hx*psi_tmp_real[j]+hy*psi_tmp_imaginary[j]+hz*psi_tmp_real[i];
-        psi_imaginary_temp_i = hx*psi_tmp_imaginary[j]-hy*psi_tmp_real[j]+hz*psi_tmp_imaginary[i];
-        psi_real_temp_j      = hx*psi_tmp_real[i]-hy*psi_tmp_imaginary[i]-hz*psi_tmp_real[j];
-        psi_imaginary_temp_j = hx*psi_tmp_imaginary[i]+hy*psi_tmp_real[i]-hz*psi_tmp_imaginary[j];
-        psi_tmp_real[i]      += psi_real_temp_i;
-        psi_tmp_imaginary[i] += psi_imaginary_temp_i;
-        psi_tmp_real[j]      += psi_real_temp_j;
-        psi_tmp_imaginary[j] += psi_imaginary_temp_j;
+        // double psi_real_temp_i      = 0;
+        // double psi_imaginary_temp_i = 0;
+        // double psi_real_temp_j      = 0;
+        // double psi_imaginary_temp_j = 0;
+        // // combine to one
+        // psi_real_temp_i      = hx*psi_tmp_real[j]+hy*psi_tmp_imaginary[j]+hz*psi_tmp_real[i];
+        // psi_imaginary_temp_i = hx*psi_tmp_imaginary[j]-hy*psi_tmp_real[j]+hz*psi_tmp_imaginary[i];
+        // psi_real_temp_j      = hx*psi_tmp_real[i]-hy*psi_tmp_imaginary[i]-hz*psi_tmp_real[j];
+        // psi_imaginary_temp_j = hx*psi_tmp_imaginary[i]+hy*psi_tmp_real[i]-hz*psi_tmp_imaginary[j];
+        // psi_tmp_real[i]      += psi_real_temp_i;
+        // psi_tmp_imaginary[i] += psi_imaginary_temp_i;
+        // psi_tmp_real[j]      += psi_real_temp_j;
+        // psi_tmp_imaginary[j] += psi_imaginary_temp_j;
+
+        //added 03.04.2017
+        psi_tmp_real[i]      += hx*psi_real[j]+hy*psi_imaginary[j]+hz*psi_real[i];;
+        psi_tmp_imaginary[i] += hx*psi_imaginary[j]-hy*psi_real[j]+hz*psi_imaginary[i];;
+        psi_tmp_real[j]      += hx*psi_real[i]-hy*psi_imaginary[i]-hz*psi_real[j];;
+        psi_tmp_imaginary[j] += hx*psi_imaginary[i]+hy*psi_real[i]-hz*psi_imaginary[j];;
+
       }
     }
   }
@@ -2195,32 +2204,43 @@ void spin_system::exp_appr_op(double t, int M){
           // psi_tmp_real[n3]      += Jz*psi_real[n3];
           // psi_tmp_imaginary[n3] += Jz*psi_imaginary[n3];
 
-          double psi_real_temp_n0      = 0;
-          double psi_imaginary_temp_n0 = 0;
-          double psi_real_temp_n1      = 0;
-          double psi_imaginary_temp_n1 = 0;
-          double psi_real_temp_n2      = 0;
-          double psi_imaginary_temp_n2 = 0;
-          double psi_real_temp_n3      = 0;
-          double psi_imaginary_temp_n3 = 0;
+          // double psi_real_temp_n0      = 0;
+          // double psi_imaginary_temp_n0 = 0;
+          // double psi_real_temp_n1      = 0;
+          // double psi_imaginary_temp_n1 = 0;
+          // double psi_real_temp_n2      = 0;
+          // double psi_imaginary_temp_n2 = 0;
+          // double psi_real_temp_n3      = 0;
+          // double psi_imaginary_temp_n3 = 0;
+          //
+          // psi_real_temp_n0      =Jx*psi_tmp_real[n3]-Jy*psi_tmp_real[n3]+Jz*psi_tmp_real[n0];
+          // psi_imaginary_temp_n0 =Jx*psi_tmp_imaginary[n3]-Jy*psi_tmp_imaginary[n3]+Jz*psi_tmp_imaginary[n0];
+          // psi_real_temp_n1      =Jx*psi_tmp_real[n2]+Jy*psi_tmp_real[n2]-Jz*psi_tmp_real[n1];
+          // psi_imaginary_temp_n1 =Jx*psi_tmp_imaginary[n2]+Jy*psi_tmp_imaginary[n2]-Jz*psi_tmp_imaginary[n1];
+          // psi_real_temp_n2      =Jx*psi_tmp_real[n1]+Jy*psi_tmp_real[n1]-Jz*psi_tmp_real[n2];
+          // psi_imaginary_temp_n2 =Jx*psi_tmp_imaginary[n1]+Jy*psi_tmp_imaginary[n1]-Jz*psi_tmp_imaginary[n2];
+          // psi_real_temp_n3      =Jx*psi_tmp_real[n0]-Jy*psi_tmp_real[n0]+Jz*psi_tmp_real[n3];
+          // psi_imaginary_temp_n3 =Jx*psi_tmp_imaginary[n0]-Jy*psi_tmp_imaginary[n0]+Jz*psi_tmp_imaginary[n3];
+          //
+          // psi_tmp_real[n0]      += psi_real_temp_n0;
+          // psi_tmp_imaginary[n0] += psi_imaginary_temp_n0;
+          // psi_tmp_real[n1]      += psi_real_temp_n1;
+          // psi_tmp_imaginary[n1] += psi_imaginary_temp_n1;
+          // psi_tmp_real[n2]      += psi_real_temp_n2;
+          // psi_tmp_imaginary[n2] += psi_imaginary_temp_n2;
+          // psi_tmp_real[n3]      += psi_real_temp_n3;
+          // psi_tmp_imaginary[n3] += psi_imaginary_temp_n3;
 
-          psi_real_temp_n0      =Jx*psi_tmp_real[n3]-Jy*psi_tmp_real[n3]+Jz*psi_tmp_real[n0];
-          psi_imaginary_temp_n0 =Jx*psi_tmp_imaginary[n3]-Jy*psi_tmp_imaginary[n3]+Jz*psi_tmp_imaginary[n0];
-          psi_real_temp_n1      =Jx*psi_tmp_real[n2]+Jy*psi_tmp_real[n2]-Jz*psi_tmp_real[n1];
-          psi_imaginary_temp_n1 =Jx*psi_tmp_imaginary[n2]+Jy*psi_tmp_imaginary[n2]-Jz*psi_tmp_imaginary[n1];
-          psi_real_temp_n2      =Jx*psi_tmp_real[n1]+Jy*psi_tmp_real[n1]-Jz*psi_tmp_real[n2];
-          psi_imaginary_temp_n2 =Jx*psi_tmp_imaginary[n1]+Jy*psi_tmp_imaginary[n1]-Jz*psi_tmp_imaginary[n2];
-          psi_real_temp_n3      =Jx*psi_tmp_real[n0]-Jy*psi_tmp_real[n0]+Jz*psi_tmp_real[n3];
-          psi_imaginary_temp_n3 =Jx*psi_tmp_imaginary[n0]-Jy*psi_tmp_imaginary[n0]+Jz*psi_tmp_imaginary[n3];
+          //added 03.04.2017
+          psi_tmp_real[n0]      +=Jx*psi_real[n3]-Jy*psi_real[n3]+Jz*psi_real[n0];
+          psi_tmp_imaginary[n0] +=Jx*psi_imaginary[n3]-Jy*psi_imaginary[n3]+Jz*psi_imaginary[n0];
+          psi_tmp_real[n1]      +=Jx*psi_real[n2]+Jy*psi_real[n2]-Jz*psi_real[n1];
+          psi_tmp_imaginary[n1] +=Jx*psi_imaginary[n2]+Jy*psi_imaginary[n2]-Jz*psi_imaginary[n1];
+          psi_tmp_real[n2]      +=Jx*psi_real[n1]+Jy*psi_real[n1]-Jz*psi_real[n2];
+          psi_tmp_imaginary[n2] +=Jx*psi_imaginary[n1]+Jy*psi_imaginary[n1]-Jz*psi_imaginary[n2];
+          psi_tmp_real[n3]      +=Jx*psi_real[n0]-Jy*psi_real[n0]+Jz*psi_real[n3];
+          psi_tmp_imaginary[n3] +=Jx*psi_imaginary[n0]-Jy*psi_imaginary[n0]+Jz*psi_imaginary[n3];
 
-          psi_tmp_real[n0]      += psi_real_temp_n0;
-          psi_tmp_imaginary[n0] += psi_imaginary_temp_n0;
-          psi_tmp_real[n1]      += psi_real_temp_n1;
-          psi_tmp_imaginary[n1] += psi_imaginary_temp_n1;
-          psi_tmp_real[n2]      += psi_real_temp_n2;
-          psi_tmp_imaginary[n2] += psi_imaginary_temp_n2;
-          psi_tmp_real[n3]      += psi_real_temp_n3;
-          psi_tmp_imaginary[n3] += psi_imaginary_temp_n3;
 
 
           // test=k;
@@ -2233,8 +2253,23 @@ void spin_system::exp_appr_op(double t, int M){
     //   cout<<i<<"( "<<psi_tmp_real[i]<<", "<<psi_tmp_imaginary[i]<<")"<<endl;
     psi_real[i]=1*psi_real[i]+(-(1./Temperature)*psi_tmp_real[i]/(2.*M));
     psi_imaginary[i]=1*psi_imaginary[i]+(-(1./Temperature)*psi_tmp_imaginary[i]/(2.*M));
-
   }
+  double norm=0;
+  for (int i = 0; i < nofstates; i++) {
+    norm+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
+  }
+  norm=1./sqrt(norm);
+  for (int i = 0; i < nofstates; i++) {
+    psi_real[i]=norm*psi_real[i];
+    psi_imaginary[i]=norm*psi_imaginary[i];
+  }
+  // norm=0;
+  // for (int i = 0; i < nofstates; i++) {
+  //   norm+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
+  // }
+  //
+  // cout<<"norm inside appr: "<<norm<<endl;
+
   // cout<<"hear!!!"<<test<<endl;
 
 }
@@ -2274,7 +2309,7 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=5;
+    int M=150;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
