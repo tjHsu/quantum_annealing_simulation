@@ -2120,10 +2120,10 @@ void spin_system::exp_appr_op(double t, int M){
         // psi_tmp_imaginary[j] += psi_imaginary_temp_j;
 
         //added 03.04.2017
-        psi_tmp_real[i]      += hx*psi_real[j]+hy*psi_imaginary[j]+hz*psi_real[i];;
-        psi_tmp_imaginary[i] += hx*psi_imaginary[j]-hy*psi_real[j]+hz*psi_imaginary[i];;
-        psi_tmp_real[j]      += hx*psi_real[i]-hy*psi_imaginary[i]-hz*psi_real[j];;
-        psi_tmp_imaginary[j] += hx*psi_imaginary[i]+hy*psi_real[i]-hz*psi_imaginary[j];;
+        psi_tmp_real[i]      += hx*psi_real[j]+hy*psi_imaginary[j]+hz*psi_real[i];
+        psi_tmp_imaginary[i] += hx*psi_imaginary[j]-hy*psi_real[j]+hz*psi_imaginary[i];
+        psi_tmp_real[j]      += hx*psi_real[i]-hy*psi_imaginary[i]-hz*psi_real[j];
+        psi_tmp_imaginary[j] += hx*psi_imaginary[i]+hy*psi_real[i]-hz*psi_imaginary[j];
 
       }
     }
