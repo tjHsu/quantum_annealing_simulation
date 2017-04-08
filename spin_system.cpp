@@ -1669,16 +1669,16 @@ void spin_system::sumaverage(int n, double* array_real, double* array_imagine, c
   double Norm=0;
   double rand_tmp=distribution(generator);
   for (int i = 0; i < nos_env; i++) {
-    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-    //   rand_tmp=distribution(generator);
-    //   // cout<<"insied while loop for Gaussain random"<<endl;
-    // }
+    while (rand_tmp>1.0 || rand_tmp<-1.0) {
+      rand_tmp=distribution(generator);
+      // cout<<"insied while loop for Gaussain random"<<endl;
+    }
     normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
     rand_tmp=distribution(generator);
-    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-    //   rand_tmp=distribution(generator);
-    //   // cout<<"insied while loop for Gaussain random"<<endl;
-    // }
+    while (rand_tmp>1.0 || rand_tmp<-1.0) {
+      rand_tmp=distribution(generator);
+      // cout<<"insied while loop for Gaussain random"<<endl;
+    }
     normalize_factor[i]+=rand_tmp*ImgNum;
     // cout<<normalize_factor[i]<<endl;
     Norm+=norm(normalize_factor[i]);
@@ -1700,18 +1700,32 @@ void spin_system::sumaverage(int n, double* array_real, double* array_imagine, c
   for (int i = 0; i < nos_env; i++) {
     normalize_factor[i]=normalize_factor[i]*Norm;
   }
-  // normalize_factor=sqrt((1./pow(2,N_env)));
   for (int i = 0; i < nos_env; i++) {
-    for (int j = 0; j < nos_env; j++) {
-      array_env[i]+=normalize_factor[j]* env[j*nos_env+i];
-    }
-  }
-  for (int i = 0; i < nos_env; i++) {
+    // cout<<normalize_factor[i]<<endl;
     for (int j = 0; j < nos_sys; j++) {
-      array_real[i*nos_sys+j]=array_env[n*nos_env+i].real()*sys_real[j]-array_env[n*nos_env+i].imag()*sys_imag[j];
-      array_imagine[i*nos_sys+j]=array_env[n*nos_env+i].imag()*sys_real[j]+array_env[n*nos_env+i].real()*sys_imag[j];
+      array_real[i*nos_sys+j]=normalize_factor[i].real()*sys_real[j]-normalize_factor[i].imag()*sys_imag[j];
+      array_imagine[i*nos_sys+j]=normalize_factor[i].imag()*sys_real[j]+normalize_factor[i].real()*sys_imag[j];
     }
   }
+
+  // comment on 06.04.2017
+  // // normalize_factor=sqrt((1./pow(2,N_env)));
+  // for (int i = 0; i < nos_env; i++) {
+  //   for (int j = 0; j < nos_env; j++) {
+  //     array_env[i]+=normalize_factor[j]* env[j*nos_env+i];
+  //   }
+  // }
+  //
+  // for (int i = 0; i < nos_env; i++) {
+  //   for (int j = 0; j < nos_sys; j++) {
+  //     array_real[i*nos_sys+j]=array_env[n*nos_env+i].real()*sys_real[j]-array_env[n*nos_env+i].imag()*sys_imag[j];
+  //     array_imagine[i*nos_sys+j]=array_env[n*nos_env+i].imag()*sys_real[j]+array_env[n*nos_env+i].real()*sys_imag[j];
+  //   }
+  // }
+
+
+
+
 }
 
 /* !!!!!!!!WILL BE REMOVE in the future, since it might be a wrong implementation!!!!!!!
@@ -1982,7 +1996,7 @@ void spin_system::run(){
         cout<<"E_i= "<<E_i<<", w[]= "<<w[E_i]<<", step: "<<step<<endl;
 
       energy_sys_return[step]+=w[E_i]*energy(step*tau);
-      // energy_env_return[step]+=w[E_i]*energy_env(step*tau);
+      energy_env_return[step]+=w[E_i]*energy_env(step*tau);
       // energy_se_return[step]+=w[E_i]*energy_se(step*tau);
       // energy_all_return[step]+=w[E_i]*energy_all(step*tau);
       // for (int s = 0; s < N; s++) {
@@ -2026,12 +2040,12 @@ void spin_system::run(){
 
 
   ostringstream strs;
-  // strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
-  strs <<"H"<<J_index<<"_"<<"Ts"<<(T*10)<<".dat";//output name for multiple output for landau ziener comparison
+  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
+  //strs <<"H"<<J_index<<"_"<<"Ts"<<(T*10)<<".dat";//output name for multiple output for landau ziener comparison
   string str = strs.str();
-  string strmain="/home/zam/t.hsu/Documents/2016_WS_MT/Product_formula/gap_result/output_general_";
-  strmain.append(str);
-  const char *testChars = strmain.c_str();
+  //string strmain="/home/zam/t.hsu/Documents/2016_WS_MT/Product_formula/gap_result/output_general_";
+  //strmain.append(str);
+  const char *testChars = str.c_str();
   ofstream output(testChars);
   output<<"Time Energy_sys Energy_env Energy_se Energy_all Frequency ";
   for (int i = 0; i < N; i++) {
@@ -2063,8 +2077,6 @@ void spin_system::run(){
 
 void spin_system::exp_appr_op(double t, int M){
   for (int i = 0; i < nofstates; i++) {
-    // psi_tmp_real[i]=psi_real[i];
-    // psi_tmp_imaginary[i]=psi_imaginary[i];
     psi_tmp_real[i]=0;
     psi_tmp_imaginary[i]=0;
   }
