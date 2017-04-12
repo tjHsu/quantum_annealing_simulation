@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
   double T[10]={1e3,2e3,5e3,1e4,2e4,1e5,1e1,1e2,2e2,5e2};
   double J[6]={0,0.05,0.1,0.2,0.5,1};
   success_probability_out<<"Total_steps(tau=0.1) ";
-  for (int i = J_start; i < J_start+1; i++) {
+  for (int i = J_start; i < J_start+6; i++) {
     success_probability_out<<"J="<<J[i]<<" ";
   }
   success_probability_out<<endl;
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
   int env_on=1;
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
-    for (int j = J_start; j < J_start+1; j++) {
+    for (int j = J_start; j < J_start+6; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
       test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
       time_t start=time(0);
       clock_t t;
       t = clock();
-      test.run();
+      test.random_wavef_run();
       t =clock()-t;
       time_t end=time(0);
       double time=difftime(end,start);

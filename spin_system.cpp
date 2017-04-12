@@ -2309,7 +2309,7 @@ void spin_system::random_wavef_run(){
       cout<<"step:"<<step<<endl;
 
     energy_sys_return[step]=energy(step*tau);
-    // energy_env_return[step]=energy_env(step*tau);
+    energy_env_return[step]=energy_env(step*tau);
     // energy_se_return[step]=energy_se(step*tau);
     // energy_all_return[step]=energy_all(step*tau);
     // for (int s = 0; s < N; s++) {
@@ -2322,7 +2322,7 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=15;
+    int M=50;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
