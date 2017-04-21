@@ -1663,22 +1663,35 @@ void spin_system::sumaverage(int n, double* array_real, double* array_imagine, c
   //prepare gaussian distribution
 
   normal_distribution<double> distribution(0.0,1./3);//sqrt2/2
+  double rand_tmp=distribution(generator);
 
 
   srand(time(NULL));
+  double mean = 0.0;
+  double std = 1./3;
+  double u,v;
+
+
+
   double Norm=0;
-  double rand_tmp=distribution(generator);
+
   for (int i = 0; i < nos_env; i++) {
-    while (rand_tmp>1.0 || rand_tmp<-1.0) {
-      rand_tmp=distribution(generator);
-      // cout<<"insied while loop for Gaussain random"<<endl;
-    }
+    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+    //   rand_tmp=distribution(generator);
+    //   // cout<<"insied while loop for Gaussain random"<<endl;
+    // }
+    u = rand() / (double)RAND_MAX;
+    v = rand() / (double)RAND_MAX;
+    rand_tmp= sqrt(-2*log(u))*cos(2*M_PI*v)*std+mean;
     normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
-    rand_tmp=distribution(generator);
-    while (rand_tmp>1.0 || rand_tmp<-1.0) {
-      rand_tmp=distribution(generator);
-      // cout<<"insied while loop for Gaussain random"<<endl;
-    }
+    // rand_tmp=distribution(generator);
+    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+    //   rand_tmp=distribution(generator);
+    //   // cout<<"insied while loop for Gaussain random"<<endl;
+    // }
+    u = rand() / (double)RAND_MAX;
+    v = rand() / (double)RAND_MAX;
+    rand_tmp = sqrt(-2*log(u))*sin(2*M_PI*v)*std+mean;
     normalize_factor[i]+=rand_tmp*ImgNum;
     // cout<<normalize_factor[i]<<endl;
     Norm+=norm(normalize_factor[i]);
@@ -2310,8 +2323,8 @@ void spin_system::random_wavef_run(){
 
     energy_sys_return[step]=energy(step*tau);
     energy_env_return[step]=energy_env(step*tau);
-    // energy_se_return[step]=energy_se(step*tau);
-    // energy_all_return[step]=energy_all(step*tau);
+    energy_se_return[step]=energy_se(step*tau);
+    energy_all_return[step]=energy_all(step*tau);
     // for (int s = 0; s < N; s++) {
     //   int index=step*N*3+s*3;
     //   spin_return[index]  =spin('x',s);
@@ -2322,7 +2335,7 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=50;
+    int M=15;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
