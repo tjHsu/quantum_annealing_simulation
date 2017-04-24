@@ -2329,6 +2329,164 @@ void spin_system::exp_appr_op(double t, int M){
   // cout<<"hear!!!"<<test<<endl;
 
 }
+
+void spin_system::exp_appr_taylor(double t, int M){
+  double psi_intertemp_real[nofstates];
+  double psi_intertemp_imaginary[nofstates];
+  double psi_temp2_real[nofstates];
+  double psi_temp2_imaginary[nofstates];
+
+  for (int i = 0; i < nofstates; i++) {
+    psi_tmp_real[i]=0;
+    psi_tmp_imaginary[i]=0;
+    psi_intertemp_real[i]=0;
+    psi_intertemp_imaginary[i]=0;
+    psi_temp2_real[i]=0;
+    psi_temp2_imaginary[i]=0;
+
+  }
+  M=M+1;
+  for (int taylor_order = 1; taylor_order < M; taylor_order++) {
+    for (int current_order = 0; current_order < taylor_order; current_order++) {
+      //////start
+      if (0==current_order) {
+        for (int i = 0; i < nofstates; i++) {
+          psi_tmp_real[i]=0;
+          psi_tmp_imaginary[i]=0;
+          psi_temp2_real[i]=psi_real[i];
+          psi_temp2_imaginary[i]=psi_imaginary[i];
+        }
+      } else {
+        for (int i = 0; i < nofstates; i++) {
+          psi_temp2_real[i]=psi_tmp_real[i];
+          psi_temp2_imaginary[i]=psi_tmp_imaginary[i];
+          psi_tmp_real[i]=0;
+          psi_tmp_imaginary[i]=0;
+        }
+      }
+
+      for (int k = N-N_env; k <N ; k++) {
+        double hx=-1*h_x[k];
+        double hy=-1*h_y[k];
+        double hz=-1*h_z[k];
+
+        if(abs(hx)>1e-15||abs(hy)>1e-15||abs(hz)>1e-15){
+          int i1=(int) pow(2,k);
+          #pragma omp parallel for default(none) shared(i1,hx,hy,hz,psi_temp2_real,psi_temp2_imaginary)
+          for (int l = 0; l < nofstates; l+=2) {
+            int i2= l & i1;
+            int i = l -i2+i2/i1;
+            int j = i+i1;
+            /*sigma_x*/
+            psi_tmp_real[i]     += hx*psi_temp2_real[j];
+            psi_tmp_imaginary[i]+= hx*psi_temp2_imaginary[j];
+            psi_tmp_real[j]     += hx*psi_temp2_real[i];
+            psi_tmp_imaginary[j]+= hx*psi_temp2_imaginary[i];
+            /*sigma_y*/
+            psi_tmp_real[i]     += hy*psi_temp2_imaginary[j];
+            psi_tmp_imaginary[i]+= -hy*psi_temp2_real[j];
+            psi_tmp_real[j]     += -hy*psi_temp2_imaginary[i];
+            psi_tmp_imaginary[j]+= hy*psi_temp2_real[i];
+            /*sigma_z*/
+            psi_tmp_real[i]     += hz*psi_temp2_real[i];
+            psi_tmp_imaginary[i]+= hz*psi_temp2_imaginary[i];
+            psi_tmp_real[j]     += -hz*psi_temp2_real[j];
+            psi_tmp_imaginary[j]+= -hz*psi_temp2_imaginary[j];
+          }
+        }
+      }
+
+      for (int k = N-N_env; k <N ; k++) {
+        for (int l = k+1; l < N; l++) {
+          double Jx=-1*Jx_env[(k-N_sys)+(l-N_sys)*N_env];
+          double Jy=-1*Jy_env[(k-N_sys)+(l-N_sys)*N_env];
+          double Jz=-1*Jz_env[(k-N_sys)+(l-N_sys)*N_env];
+
+          if(abs(Jx)>1e-15||abs(Jy)>1e-15||abs(Jz)>1e-15){
+            int nii=(int) pow(2,k);
+            int njj=(int) pow(2,l);
+            #pragma omp parallel for default(none) shared(nii,njj,Jx,Jy,Jz,k,psi_temp2_real,psi_temp2_imaginary)
+            for (int m = 0; m < nofstates; m+=4) {
+              int n3 = m & njj;
+              int n2 = m-n3+(n3+n3)/njj;
+              int n1 = n2 & nii;
+              int n0 = n2-n1+n1/nii;
+              n1=n0+nii;
+              n2=n0+njj;
+              n3=n1+njj;
+              /*sigma_x*sigma_x*/
+              psi_tmp_real[n0]      += Jx*psi_temp2_real[n3];
+              psi_tmp_imaginary[n0] += Jx*psi_temp2_imaginary[n3];
+              psi_tmp_real[n1]      += Jx*psi_temp2_real[n2];
+              psi_tmp_imaginary[n1] += Jx*psi_temp2_imaginary[n2];
+              psi_tmp_real[n2]      += Jx*psi_temp2_real[n1];
+              psi_tmp_imaginary[n2] += Jx*psi_temp2_imaginary[n1];
+              psi_tmp_real[n3]      += Jx*psi_temp2_real[n0];
+              psi_tmp_imaginary[n3] += Jx*psi_temp2_imaginary[n0];
+              /*sigma_y*sigma_y*/
+              psi_tmp_real[n0]      += -Jy*psi_temp2_real[n3];
+              psi_tmp_imaginary[n0] += -Jy*psi_temp2_imaginary[n3];
+              psi_tmp_real[n1]      += Jy*psi_temp2_real[n2];
+              psi_tmp_imaginary[n1] += Jy*psi_temp2_imaginary[n2];
+              psi_tmp_real[n2]      += Jy*psi_temp2_real[n1];
+              psi_tmp_imaginary[n2] += Jy*psi_temp2_imaginary[n1];
+              psi_tmp_real[n3]      += -Jy*psi_temp2_real[n0];
+              psi_tmp_imaginary[n3] += -Jy*psi_temp2_imaginary[n0];
+              /*sigma_z*sigma_z*/
+              psi_tmp_real[n0]      += Jz*psi_temp2_real[n0];
+              psi_tmp_imaginary[n0] += Jz*psi_temp2_imaginary[n0];
+              psi_tmp_real[n1]      += -Jz*psi_temp2_real[n1];
+              psi_tmp_imaginary[n1] += -Jz*psi_temp2_imaginary[n1];
+              psi_tmp_real[n2]      += -Jz*psi_temp2_real[n2];
+              psi_tmp_imaginary[n2] += -Jz*psi_temp2_imaginary[n2];
+              psi_tmp_real[n3]      += Jz*psi_temp2_real[n3];
+              psi_tmp_imaginary[n3] += Jz*psi_temp2_imaginary[n3];
+
+            }
+          }
+        }
+      }
+      //////end
+      double factor=-1./Temperature/2;
+      double norm=0;
+      for (int i = 0; i < nofstates; i++) {
+        psi_tmp_real[i]=psi_tmp_real[i]*factor;
+        psi_tmp_imaginary[i]=psi_tmp_imaginary[i]*factor;
+        norm+= psi_temp2_real[i]*psi_temp2_real[i]+psi_temp2_imaginary[i]*psi_temp2_imaginary[i];
+      }
+      norm=1./sqrt(norm);
+      for (int i = 0; i < nofstates; i++) {
+        psi_tmp_real[i]=norm*psi_tmp_real[i];
+        psi_tmp_imaginary[i]=norm*psi_tmp_imaginary[i];
+      }
+    }
+
+    // double factor=pow(-1./Temperature/2,taylor_order);
+    double factorial=1;
+    for (int i = 0; i < taylor_order; i++) {
+      factorial=factorial*(i+1);
+    }
+    for (int i = 0; i < nofstates; i++) {
+      psi_intertemp_real[i]+=psi_tmp_real[i]/factorial;
+      psi_intertemp_imaginary[i]+=psi_tmp_imaginary[i]/factorial;
+    }
+  }
+
+  for (int i = 0; i < nofstates; i++) {
+    psi_real[i]=psi_real[i]+psi_intertemp_real[i];
+    psi_imaginary[i]=psi_imaginary[i]+psi_intertemp_imaginary[i];
+  }
+  double norm=0;
+  for (int i = 0; i < nofstates; i++) {
+    norm+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
+  }
+  norm=1./sqrt(norm);
+  for (int i = 0; i < nofstates; i++) {
+    psi_real[i]=norm*psi_real[i];
+    psi_imaginary[i]=norm*psi_imaginary[i];
+  }
+}
+
 void spin_system::random_wavef_run(){
   int total_steps=(int) T/tau;
   double* frequency= new double [total_steps+1]();
@@ -2369,6 +2527,9 @@ void spin_system::random_wavef_run(){
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
+
+    // exp_appr_taylor(step*tau,M);
+
     single_spin_op(step*tau);
     double_spin_op_x(step*tau);
     double_spin_op_y(step*tau);
