@@ -51,6 +51,7 @@ private:
   double  h_x_start;
   double Gamma;
   double Delta;
+  complex<double>* RANDOM_FACTOR;
 
   /*Basis for Heat Bath Environment*/
   complex<double>* z;
@@ -127,6 +128,7 @@ public:
   void initialize(int, int ,double ,double, double, double, int, int);
   void run();
   void random_wavef_run();
+  void set_random(double);
 
   double* spin_return;
   double* energy_sys_return;

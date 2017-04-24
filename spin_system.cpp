@@ -1657,67 +1657,67 @@ void spin_system::direct_product(int n, double* array_real, double* array_imagin
 void spin_system::sumaverage(int n, double* array_real, double* array_imagine, complex<double>* env, double* sys_real, double* sys_imag){
   int nos_sys=(int) pow(2,N_sys);
   int nos_env=(int) pow(2,N_env);
-  complex<double> array_env[nos_env];
-  complex<double> normalize_factor[nos_env];
-  complex<double> ImgNum(0,1);
-  //prepare gaussian distribution
+  //// complex<double> array_env[nos_env];
+  // complex<double> normalize_factor[nos_env];
+  // complex<double> ImgNum(0,1);
+  ////prepare gaussian distribution
 
-  normal_distribution<double> distribution(0.0,1./3);//sqrt2/2
-  double rand_tmp=distribution(generator);
+  // normal_distribution<double> distribution(0.0,1./3);//sqrt2/2
+  // double grand_tmp=distribution(generator);
+  // double rand_tmp=0;
+  //
+  // srand(time(NULL));
+  // double mean = 0.0;
+  // double std = 1./3;
+  // double u,v;
 
 
-  srand(time(NULL));
-  double mean = 0.0;
-  double std = 1./3;
-  double u,v;
 
+  // double Norm=0;
 
-
-  double Norm=0;
-
-  for (int i = 0; i < nos_env; i++) {
-    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-    //   rand_tmp=distribution(generator);
-    //   // cout<<"insied while loop for Gaussain random"<<endl;
-    // }
-    u = rand() / (double)RAND_MAX;
-    v = rand() / (double)RAND_MAX;
-    rand_tmp= sqrt(-2*log(u))*cos(2*M_PI*v)*std+mean;
-    normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
-    // rand_tmp=distribution(generator);
-    // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-    //   rand_tmp=distribution(generator);
-    //   // cout<<"insied while loop for Gaussain random"<<endl;
-    // }
-    u = rand() / (double)RAND_MAX;
-    v = rand() / (double)RAND_MAX;
-    rand_tmp = sqrt(-2*log(u))*sin(2*M_PI*v)*std+mean;
-    normalize_factor[i]+=rand_tmp*ImgNum;
-    // cout<<normalize_factor[i]<<endl;
-    Norm+=norm(normalize_factor[i]);
-  }
-  // test gaussian
-  // int test[20]={0};
   // for (int i = 0; i < nos_env; i++) {
-  //   test[int((normalize_factor[i].imag()+1)/0.1)]+=1;
+  //   // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+  //   //   rand_tmp=distribution(generator);
+  //   //   // cout<<"insied while loop for Gaussain random"<<endl;
+  //   // }
+  //   u = rand() / (double)RAND_MAX;
+  //   v = rand() / (double)RAND_MAX;
+  //   rand_tmp= sqrt(-2*log(u))*cos(2*M_PI*v)*std+mean;
+  //   normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
+  //   // rand_tmp=distribution(generator);
+  //   // while (rand_tmp>1.0 || rand_tmp<-1.0) {
+  //   //   rand_tmp=distribution(generator);
+  //   //   // cout<<"insied while loop for Gaussain random"<<endl;
+  //   // }
+  //   u = rand() / (double)RAND_MAX;
+  //   v = rand() / (double)RAND_MAX;
+  //   rand_tmp = sqrt(-2*log(u))*sin(2*M_PI*v)*std+mean;
+  //   normalize_factor[i]+=rand_tmp*ImgNum;
+  //   // cout<<normalize_factor[i]<<endl;
+  //   Norm+=norm(normalize_factor[i]);
   // }
-  // for (int i = 0; i < 20; i++) {
-  //   cout<<(i-10)<<":#"<<test[i];
-  //   for (int j = 0; j < test[i]; j++)
-  //     cout<<"+";
-  //   cout<<endl;
+  // // test gaussian
+  // // int test[20]={0};
+  // // for (int i = 0; i < nos_env; i++) {
+  // //   test[int((normalize_factor[i].imag()+1)/0.1)]+=1;
+  // // }
+  // // for (int i = 0; i < 20; i++) {
+  // //   cout<<(i-10)<<":#"<<test[i];
+  // //   for (int j = 0; j < test[i]; j++)
+  // //     cout<<"+";
+  // //   cout<<endl;
+  // // }
+  // // test end
+  //
+  // Norm=1./sqrt(Norm);
+  // for (int i = 0; i < nos_env; i++) {
+  //   normalize_factor[i]=normalize_factor[i]*Norm;
   // }
-  // test end
-
-  Norm=1./sqrt(Norm);
-  for (int i = 0; i < nos_env; i++) {
-    normalize_factor[i]=normalize_factor[i]*Norm;
-  }
   for (int i = 0; i < nos_env; i++) {
     // cout<<normalize_factor[i]<<endl;
     for (int j = 0; j < nos_sys; j++) {
-      array_real[i*nos_sys+j]=normalize_factor[i].real()*sys_real[j]-normalize_factor[i].imag()*sys_imag[j];
-      array_imagine[i*nos_sys+j]=normalize_factor[i].imag()*sys_real[j]+normalize_factor[i].real()*sys_imag[j];
+      array_real[i*nos_sys+j]=RANDOM_FACTOR[i].real()*sys_real[j]-RANDOM_FACTOR[i].imag()*sys_imag[j];
+      array_imagine[i*nos_sys+j]=RANDOM_FACTOR[i].imag()*sys_real[j]+RANDOM_FACTOR[i].real()*sys_imag[j];
     }
   }
 
@@ -2087,6 +2087,36 @@ void spin_system::run(){
     psi_real[],psi_imaginary[]
 */
 
+void spin_system::set_random(double N_env){
+  int nos_env=(int) pow(2,N_env);
+  RANDOM_FACTOR=new complex<double> [nos_env]();
+  complex<double> ImgNum(0,1);
+  double rand_tmp=0;
+  srand(time(NULL));
+  double mean=0.0;
+  double std=1./3;
+  double u,v;
+  double Norm=0;
+  for (int i = 0; i < nos_env; i++) {
+    u = rand() / (double)RAND_MAX;
+    v = rand() / (double)RAND_MAX;
+    rand_tmp= sqrt(-2*log(u))*cos(2*M_PI*v)*std+mean;
+    RANDOM_FACTOR[i]=rand_tmp;
+
+    u = rand() / (double)RAND_MAX;
+    v = rand() / (double)RAND_MAX;
+    rand_tmp = sqrt(-2*log(u))*sin(2*M_PI*v)*std+mean;
+    RANDOM_FACTOR[i]+=rand_tmp*ImgNum;
+    Norm+=norm(RANDOM_FACTOR[i]);
+  }
+
+
+  Norm=1./sqrt(Norm);
+  for (int i = 0; i < nos_env; i++) {
+    RANDOM_FACTOR[i]=RANDOM_FACTOR[i]*Norm;
+  }
+
+}
 
 void spin_system::exp_appr_op(double t, int M){
   for (int i = 0; i < nofstates; i++) {
