@@ -162,8 +162,8 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   // }
   set_initial_sys_state("allx");
 
-  if (0==readin_psi_on) {
-    int M=500;
+  if (1==readin_psi_on) {
+    int M=10000;
     for (int i = 0; i < M; i++) {
       if (i%1000==0) {
         cout<<".."<<i<<".."<<endl;
@@ -177,7 +177,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
         Psi_i_out<<psi_imaginary[i]<<endl;
     }
 
-  } else if (1==readin_psi_on) {
+  } else if (0==readin_psi_on) {
     read(nofstates,psi_real,"psi_appr_real.dat");
     read(nofstates,psi_imaginary,"psi_appr_imagine.dat");
     cout<<"Read for psi_real and psi_imaginary after exp_appr function"<<endl;
