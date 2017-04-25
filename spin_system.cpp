@@ -2523,7 +2523,7 @@ void spin_system::random_wavef_run(){
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=15;
+    int M=5000;
     for (int i = 0; i < M; i++) {
       exp_appr_op(step*tau,M);
     }
