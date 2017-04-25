@@ -8,7 +8,7 @@
     tau_user_defined: the timestep of simulation
     G_user_defined: the global factor for Jse
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index_user_defined){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index_user_defined, int readin_psi_on){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
@@ -161,6 +161,27 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   //   psi_sys_imaginary[i] = 0;
   // }
   set_initial_sys_state("allx");
+
+  if (0==readin_psi_on) {
+    int M=500;
+    for (int i = 0; i < M; i++) {
+      if (i%1000==0) {
+        cout<<".."<<i<<".."<<endl;
+      }
+      exp_appr_op(0,M);
+    }
+    ofstream Psi_r_out("psi_appr_real.dat");
+    ofstream Psi_i_out("psi_appr_imagine.dat");
+    for (int i = 0; i < nofstates; i++) {
+        Psi_r_out<<psi_real[i]<<endl;
+        Psi_i_out<<psi_imaginary[i]<<endl;
+    }
+
+  } else if (1==readin_psi_on) {
+    read(nofstates,psi_real,"psi_appr_real.dat");
+    read(nofstates,psi_imaginary,"psi_appr_imagine.dat");
+    cout<<"Read for psi_real and psi_imaginary after exp_appr function"<<endl;
+  }
 
   /* initialize the  matrix. We have two kind of Hamiltonian operator here.
     First is the single spin operator, ss_operator.
@@ -2446,13 +2467,13 @@ void spin_system::random_wavef_run(){
   output<<endl;
   //output set END
 
-  int M=500;
-  for (int i = 0; i < M; i++) {
-    if (i%1000==0) {
-      cout<<".."<<i<<".."<<endl;
-    }
-    exp_appr_op(0,M);
-  }
+  // int M=500;
+  // for (int i = 0; i < M; i++) {
+  //   if (i%1000==0) {
+  //     cout<<".."<<i<<".."<<endl;
+  //   }
+  //   exp_appr_op(0,M);
+  // }
   for (int step = 0; step < total_steps+1; step++){ //+1 because i count the 0 point and the last poing as well.
     Delta=step*tau/T;
     Gamma=1-Delta;

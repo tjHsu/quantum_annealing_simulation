@@ -50,15 +50,19 @@ int main(int argc, char* argv[]){
   clock_t t_all;
   t_all = clock();
   int env_on=1;
+  int readin_psi_on=1;
   test.set_random(8);
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
     for (int j = J_start; j < J_start+6; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0);
+      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0,0);
       if (1==env_on) {
         env_on=0;
+      }
+      if (1==readin_psi_on) {
+        readin_psi_on=0;
       }
       test.skip_zeroterm();
 
