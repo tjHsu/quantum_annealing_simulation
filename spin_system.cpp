@@ -1629,117 +1629,6 @@ void spin_system::environment(int N_env, double Temperature){
 
 }
 
-/* It make a driect product of basis states of E_i and Sys.This is a replace function for generate().
-  Input:
-    n: the #th of the E_i.(Which Ei's eigenvector you want to calculate with)
-    array_real: the output real part
-    array_imagine: the output imag part
-    complex<double>* env: eigenvector of Env get from Lapack
-    sys_real: the real part of psi of system
-    sys_imag: the imag part of psi of system
-  Side Effect:
-    array_real[],array_imagine[]
-  #: usually the side effect is on psi_real[] and psi_imaginary[]
-*/
-void spin_system::direct_product(int n, double* array_real, double* array_imagine, complex<double>* env, double* sys_real, double* sys_imag){
-
-  int nos_sys=(int) pow(2,N_sys);
-  int nos_env=(int) pow(2,N_env);
-  for (int i = 0; i < nos_env; i++) {
-    for (int j = 0; j < nos_sys; j++) {
-      array_real[i*nos_sys+j]=env[n*nos_env+i].real()*sys_real[j]-env[n*nos_env+i].imag()*sys_imag[j];
-      array_imagine[i*nos_sys+j]=env[n*nos_env+i].imag()*sys_real[j]+env[n*nos_env+i].real()*sys_imag[j];
-      // cout<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
-    }
-  }
-}
-
-void spin_system::sumaverage(int n, double* array_real, double* array_imagine, complex<double>* env, double* sys_real, double* sys_imag){
-  int nos_sys=(int) pow(2,N_sys);
-  int nos_env=(int) pow(2,N_env);
-  //// complex<double> array_env[nos_env];
-  // complex<double> normalize_factor[nos_env];
-  // complex<double> ImgNum(0,1);
-  ////prepare gaussian distribution
-
-  // normal_distribution<double> distribution(0.0,1./3);//sqrt2/2
-  // double grand_tmp=distribution(generator);
-  // double rand_tmp=0;
-  //
-  // srand(time(NULL));
-  // double mean = 0.0;
-  // double std = 1./3;
-  // double u,v;
-
-
-
-  // double Norm=0;
-
-  // for (int i = 0; i < nos_env; i++) {
-  //   // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-  //   //   rand_tmp=distribution(generator);
-  //   //   // cout<<"insied while loop for Gaussain random"<<endl;
-  //   // }
-  //   u = rand() / (double)RAND_MAX;
-  //   v = rand() / (double)RAND_MAX;
-  //   rand_tmp= sqrt(-2*log(u))*cos(2*M_PI*v)*std+mean;
-  //   normalize_factor[i]=rand_tmp;//((double) rand()/RAND_MAX);
-  //   // rand_tmp=distribution(generator);
-  //   // while (rand_tmp>1.0 || rand_tmp<-1.0) {
-  //   //   rand_tmp=distribution(generator);
-  //   //   // cout<<"insied while loop for Gaussain random"<<endl;
-  //   // }
-  //   u = rand() / (double)RAND_MAX;
-  //   v = rand() / (double)RAND_MAX;
-  //   rand_tmp = sqrt(-2*log(u))*sin(2*M_PI*v)*std+mean;
-  //   normalize_factor[i]+=rand_tmp*ImgNum;
-  //   // cout<<normalize_factor[i]<<endl;
-  //   Norm+=norm(normalize_factor[i]);
-  // }
-  // // test gaussian
-  // // int test[20]={0};
-  // // for (int i = 0; i < nos_env; i++) {
-  // //   test[int((normalize_factor[i].imag()+1)/0.1)]+=1;
-  // // }
-  // // for (int i = 0; i < 20; i++) {
-  // //   cout<<(i-10)<<":#"<<test[i];
-  // //   for (int j = 0; j < test[i]; j++)
-  // //     cout<<"+";
-  // //   cout<<endl;
-  // // }
-  // // test end
-  //
-  // Norm=1./sqrt(Norm);
-  // for (int i = 0; i < nos_env; i++) {
-  //   normalize_factor[i]=normalize_factor[i]*Norm;
-  // }
-  for (int i = 0; i < nos_env; i++) {
-    // cout<<normalize_factor[i]<<endl;
-    for (int j = 0; j < nos_sys; j++) {
-      array_real[i*nos_sys+j]=RANDOM_FACTOR[i].real()*sys_real[j]-RANDOM_FACTOR[i].imag()*sys_imag[j];
-      array_imagine[i*nos_sys+j]=RANDOM_FACTOR[i].imag()*sys_real[j]+RANDOM_FACTOR[i].real()*sys_imag[j];
-    }
-  }
-
-  // comment on 06.04.2017
-  // // normalize_factor=sqrt((1./pow(2,N_env)));
-  // for (int i = 0; i < nos_env; i++) {
-  //   for (int j = 0; j < nos_env; j++) {
-  //     array_env[i]+=normalize_factor[j]* env[j*nos_env+i];
-  //   }
-  // }
-  //
-  // for (int i = 0; i < nos_env; i++) {
-  //   for (int j = 0; j < nos_sys; j++) {
-  //     array_real[i*nos_sys+j]=array_env[n*nos_env+i].real()*sys_real[j]-array_env[n*nos_env+i].imag()*sys_imag[j];
-  //     array_imagine[i*nos_sys+j]=array_env[n*nos_env+i].imag()*sys_real[j]+array_env[n*nos_env+i].real()*sys_imag[j];
-  //   }
-  // }
-
-
-
-
-}
 
 /* !!!!!!!!WILL BE REMOVE in the future, since it might be a wrong implementation!!!!!!!
   Try to read the initial basis state from the system and the Enivironment
@@ -1966,6 +1855,31 @@ void spin_system::skip_zeroterm(){
 }
 
 
+/* It make a driect product of basis states of E_i and Sys.This is a replace function for generate().
+  Input:
+    n: the #th of the E_i.(Which Ei's eigenvector you want to calculate with)
+    array_real: the output real part
+    array_imagine: the output imag part
+    complex<double>* env: eigenvector of Env get from Lapack
+    sys_real: the real part of psi of system
+    sys_imag: the imag part of psi of system
+  Side Effect:
+    array_real[],array_imagine[]
+  #: usually the side effect is on psi_real[] and psi_imaginary[]
+*/
+void spin_system::direct_product(int n, double* array_real, double* array_imagine, complex<double>* env, double* sys_real, double* sys_imag){
+
+  int nos_sys=(int) pow(2,N_sys);
+  int nos_env=(int) pow(2,N_env);
+  for (int i = 0; i < nos_env; i++) {
+    for (int j = 0; j < nos_sys; j++) {
+      array_real[i*nos_sys+j]=env[n*nos_env+i].real()*sys_real[j]-env[n*nos_env+i].imag()*sys_imag[j];
+      array_imagine[i*nos_sys+j]=env[n*nos_env+i].imag()*sys_real[j]+env[n*nos_env+i].real()*sys_imag[j];
+      // cout<<array_real[i*nos_sys+j]<<" "<<array_imagine[i*nos_sys+j]<<endl;
+    }
+  }
+}
+
 /* The main process to run the simulation
   16.12.2016: I haven't add the time evolution part. It should be added after.
   26.12.2016: time evolution part added.
@@ -2117,6 +2031,19 @@ void spin_system::set_random(double N_env){
   }
 
 }
+
+void spin_system::sumaverage(double* array_real, double* array_imagine, double* sys_real, double* sys_imag){
+  int nos_sys=(int) pow(2,N_sys);
+  int nos_env=(int) pow(2,N_env);
+
+  for (int i = 0; i < nos_env; i++) {
+    for (int j = 0; j < nos_sys; j++) {
+      array_real[i*nos_sys+j]=RANDOM_FACTOR[i].real()*sys_real[j]-RANDOM_FACTOR[i].imag()*sys_imag[j];
+      array_imagine[i*nos_sys+j]=RANDOM_FACTOR[i].imag()*sys_real[j]+RANDOM_FACTOR[i].real()*sys_imag[j];
+    }
+  }
+}
+
 
 void spin_system::exp_appr_op(double t, int M){
   for (int i = 0; i < nofstates; i++) {
@@ -2493,7 +2420,7 @@ void spin_system::random_wavef_run(){
 
   double norm=0;
 
-  sumaverage(0,psi_real,psi_imaginary,z,psi_sys_real,psi_sys_imaginary);
+  sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
   for (int i = 0; i < nofstates; i++) {
     coefficient_return[i]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
   }
@@ -2502,6 +2429,22 @@ void spin_system::random_wavef_run(){
   }
   cout<<"norm before run: "<<norm<<endl;
   cout<<"START RUNNING!"<<endl;
+
+  //output
+  ostringstream strs;
+  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
+
+  string str = strs.str();
+  string strmain="output_general_";
+  strmain.append(str);
+  const char *testChars = strmain.c_str();
+  ofstream output(testChars);
+  output<<"Time Energy_sys Energy_env Energy_se Energy_all Frequency ";
+  for (int i = 0; i < N; i++) {
+    output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
+  }
+  output<<endl;
+  //output set END
   for (int step = 0; step < total_steps+1; step++){ //+1 because i count the 0 point and the last poing as well.
     Delta=step*tau/T;
     Gamma=1-Delta;
@@ -2519,12 +2462,41 @@ void spin_system::random_wavef_run(){
     //   spin_return[index+1]=spin('y',s);
     //   spin_return[index+2]=spin('z',s);
     // }
+    // output start
+    output<<step*tau<<" ";
+    output<<energy_sys_return[step]<<" ";
+    output<<energy_env_return[step]<<" ";
+    output<<energy_se_return[step]<<" ";
+    output<<energy_all_return[step]<<" ";
+    output<<frequency[step]<<" ";
+    for (int i = 0; i < 3*N; i++) {
+      output<<spin_return[step*3*N+i]<<" ";
+    }
+    output<<endl;
 
+    cout<<step*tau<<" ";
+    cout<<energy_sys_return[step]<<" ";
+    cout<<energy_env_return[step]<<" ";
+    cout<<energy_se_return[step]<<" ";
+    cout<<energy_all_return[step]<<" ";
+    cout<<frequency[step]<<" ";
+    for (int i = 0; i < 3*N; i++) {
+      cout<<spin_return[step*3*N+i]<<" ";
+    }
+    cout<<endl;
+    // output end
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
-    int M=5000;
+
+
+
+    int M=10000;
     for (int i = 0; i < M; i++) {
+      if (i%2000==0) {
+        cout<<".."<<i<<".."<<endl;
+      }
+
       exp_appr_op(step*tau,M);
     }
 
@@ -2555,31 +2527,20 @@ void spin_system::random_wavef_run(){
   for (int i = 0; i < nofstates; i++) {
     Coefficient_out<<coefficient_return[i]<<endl;
   }
-  ostringstream strs;
-  strs <<"G"<<(G/10.)<<"_"<<"Ts"<<(T*10)<<".dat";//output name for single output
 
-  string str = strs.str();
-  string strmain="output_general_";
-  strmain.append(str);
-  const char *testChars = strmain.c_str();
-  ofstream output(testChars);
-  output<<"Time Energy_sys Energy_env Energy_se Energy_all Frequency ";
-  for (int i = 0; i < N; i++) {
-    output<<"Sx_"<<i<<" "<<"Sy_"<<i<<" "<<"Sz_"<<i<<" ";
-  }
-  output<<endl;
-  for (int step = 0; step < total_steps+1; step++){
-    output<<step*tau<<" ";
-    output<<energy_sys_return[step]<<" ";
-    output<<energy_env_return[step]<<" ";
-    output<<energy_se_return[step]<<" ";
-    output<<energy_all_return[step]<<" ";
-    output<<frequency[step]<<" ";
-    for (int i = 0; i < 3*N; i++) {
-      output<<spin_return[step*3*N+i]<<" ";
-    }
-    output<<endl;
-  }
+
+  // for (int step = 0; step < total_steps+1; step++){
+  //   output<<step*tau<<" ";
+  //   output<<energy_sys_return[step]<<" ";
+  //   output<<energy_env_return[step]<<" ";
+  //   output<<energy_se_return[step]<<" ";
+  //   output<<energy_all_return[step]<<" ";
+  //   output<<frequency[step]<<" ";
+  //   for (int i = 0; i < 3*N; i++) {
+  //     output<<spin_return[step*3*N+i]<<" ";
+  //   }
+  //   output<<endl;
+  // }
   success_probability_return=frequency[total_steps];
 
 

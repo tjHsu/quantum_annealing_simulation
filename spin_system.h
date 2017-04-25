@@ -118,7 +118,7 @@ private:
   void Jse_generate(int, int, double);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
   void direct_product(int, double*, double*, complex<double>*, double*, double*);
-  void sumaverage(int, double*, double*, complex<double>*, double*, double*);
+  void sumaverage(double*, double*, double*, double*);
 
   void read(int,double*,char const *);
 

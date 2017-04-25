@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
   double J[4]={0.1,0.2,0.5,1};
 
   success_probability_out<<"Total_steps(tau=0.1) ";
-  for (int i = J_start; i < J_start+4; i++) {
+  for (int i = J_start; i < J_start+1; i++) {
     success_probability_out<<"J="<<J[i]<<" ";
   }
   success_probability_out<<endl;
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
   test.set_random(8);
   for (int i = 0; i < 10; i++) {
     success_probability_out<<T[i]<<" ";
-    for (int j = J_start; j < J_start+4; j++) {
+    for (int j = J_start; j < J_start+1; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
       test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0);
