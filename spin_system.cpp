@@ -2445,6 +2445,14 @@ void spin_system::random_wavef_run(){
   }
   output<<endl;
   //output set END
+
+  int M=500;
+  for (int i = 0; i < M; i++) {
+    if (i%1000==0) {
+      cout<<".."<<i<<".."<<endl;
+    }
+    exp_appr_op(0,M);
+  }
   for (int step = 0; step < total_steps+1; step++){ //+1 because i count the 0 point and the last poing as well.
     Delta=step*tau/T;
     Gamma=1-Delta;
@@ -2474,16 +2482,16 @@ void spin_system::random_wavef_run(){
     }
     output<<endl;
 
-    cout<<step*tau<<" ";
-    cout<<energy_sys_return[step]<<" ";
-    cout<<energy_env_return[step]<<" ";
-    cout<<energy_se_return[step]<<" ";
-    cout<<energy_all_return[step]<<" ";
-    cout<<frequency[step]<<" ";
-    for (int i = 0; i < 3*N; i++) {
-      cout<<spin_return[step*3*N+i]<<" ";
-    }
-    cout<<endl;
+    // cout<<step*tau<<" ";
+    // cout<<energy_sys_return[step]<<" ";
+    // cout<<energy_env_return[step]<<" ";
+    // cout<<energy_se_return[step]<<" ";
+    // cout<<energy_all_return[step]<<" ";
+    // cout<<frequency[step]<<" ";
+    // for (int i = 0; i < 3*N; i++) {
+    //   cout<<spin_return[step*3*N+i]<<" ";
+    // }
+    // cout<<endl;
     // output end
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
@@ -2491,14 +2499,13 @@ void spin_system::random_wavef_run(){
 
 
 
-    int M=10000;
-    for (int i = 0; i < M; i++) {
-      if (i%2000==0) {
-        cout<<".."<<i<<".."<<endl;
-      }
-
-      exp_appr_op(step*tau,M);
-    }
+    // int M=10000;
+    // for (int i = 0; i < M; i++) {
+    //   if (i%2000==0) {
+    //     cout<<".."<<i<<".."<<endl;
+    //   }
+    //   exp_appr_op(step*tau,M);
+    // }
 
     // exp_appr_taylor(step*tau,M);
 
