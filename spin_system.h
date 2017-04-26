@@ -105,7 +105,7 @@ private:
   void double_spin_op_y(double);
   void double_spin_op_z(double);
   void exp_appr_op(double, int);
-  void exp_appr_taylor(double, int);
+  void exp_appr_taylor(int);
   void set_initial_sys_state(char const *);
   double energy(double);
   double energy_all(double);
