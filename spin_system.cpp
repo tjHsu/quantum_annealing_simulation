@@ -163,6 +163,7 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   set_initial_sys_state("allx");
 
   if (1==readin_psi_on) {
+    sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
     int M=10000;
     for (int i = 0; i < M; i++) {
       if (i%1000==0) {
@@ -181,6 +182,8 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     read(nofstates,psi_real,"psi_appr_real.dat");
     read(nofstates,psi_imaginary,"psi_appr_imagine.dat");
     cout<<"Read for psi_real and psi_imaginary after exp_appr function"<<endl;
+  } else {
+    cout<<"Something go wrong with exp_appr_op() during Initialization";
   }
 
   /* initialize the  matrix. We have two kind of Hamiltonian operator here.
@@ -2441,7 +2444,7 @@ void spin_system::random_wavef_run(){
 
   double norm=0;
 
-  sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
+  // sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
   for (int i = 0; i < nofstates; i++) {
     coefficient_return[i]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
   }

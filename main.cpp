@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     for (int j = J_start; j < J_start+6; j++) {
       cout<<"Run with Time_steps= "<<T[i]<<", J= "<<J[j]<<"."<<endl;
 
-      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0,0);
+      test.initialize(N_sys,N_env,(T[i]/10),tau,Temperature,J[j]*10, env_on,0,readin_psi_on);
       if (1==env_on) {
         env_on=0;
       }

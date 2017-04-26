@@ -9,7 +9,7 @@
 #include <sstream>
 #include <complex>
 #include <cmath>
-#include <random>
+// #include <random>
 #include <time.h>
 
 
@@ -20,7 +20,7 @@ using namespace std;
 
 class spin_system {
 private:
-  default_random_engine generator;
+  // default_random_engine generator;
   int N;
   int N_sys;
   int N_env;
