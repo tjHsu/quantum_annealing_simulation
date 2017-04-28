@@ -104,10 +104,8 @@ private:
   void double_spin_op_x(double);
   void double_spin_op_y(double);
   void double_spin_op_z(double);
-  void exp_appr_op(int);
-  void exp_appr_taylor(int);
-  void set_initial_sys_state(char const *);
-  double energy(double);
+
+  double energy_sys(double);
   double energy_all(double);
   double energy_env(double);
   double energy_se(double);
@@ -117,12 +115,13 @@ private:
   void Jenv_generate(int,double);
   void Jse_generate(int, int, double);
   void generate(int, double*, double*, char const *, char const *, char const *, char const *);
+
+  void exp_appr_op(int);
+  void set_initial_sys_state(char const *);
   void direct_product(int, double*, double*, complex<double>*, double*, double*);
   void random_product(double*, double*, double*, double*);
 
   void read(int,double*,char const *);
-
-
 
 public:
   void skip_zeroterm();
