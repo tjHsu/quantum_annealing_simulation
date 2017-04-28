@@ -5,22 +5,26 @@
     N_sys_user_defined: number of spins of system
     N_env_user_defined: number of spins of environment
     T_user_defined: The Annealing time
-    tau_user_defined: the timestep of simulation
-    G_user_defined: the global factor for Jse
+    tau_user_defined: the size of timestep of simulation
+    G_user_defined: the coupling factor for Jse (system and environment)
+    J_index_user_defined: If not specify, the program will use J4 and h4 now. otherwise pleasr define which set of J the program should use.
+    env_on: if equal to 1, calculate the eigenvectors and eigenvalues of the environment spins using Lapack.
+    random_approx_on: if equal to 1, prepare a random state which approximate exponential (-B*H_e/2m)^m
 */
-void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index_user_defined, int readin_psi_on){
+void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, double T_user_defined, double tau_user_defined, double Temperature_user_defined, double G_user_defined, int env_on, int J_index_user_defined, int random_approx_on){
   Temperature = Temperature_user_defined;
   N_sys = N_sys_user_defined;
   N_env = N_env_user_defined;
   N = N_sys+N_env;
+  nofstates = (int) pow(2,N);// number of states construct by the number of total spins
   T = T_user_defined;
   tau = tau_user_defined;
   J_index=J_index_user_defined;
-  nofstates = (int) pow(2,N);// number of states construct by the number of total spins
   G = G_user_defined;
+
   /* initialize the coupling factor J for double spin Hamiltonian,
     and the factor h for single spin Hamiltonian.
-    J is for system itself, J_env is for environment itself, and J_se is the interaction
+    J is for system, J_env is for environment, and J_se is the interaction inbetween system and environment
   */
   J_x = new double [N_sys*N_sys]();
   J_y = new double [N_sys*N_sys]();
@@ -37,8 +41,8 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   h_x_start= 1;
 
   /*
-  J_index ==0: for test case. can chage file here
-  J_index !=0: for regular case. change from for loop in main.cpp
+  J_index ==0: for test case. Please chage target file here
+  J_index !=0: for regular case. Please change from the for loop in main.cpp
   */
   if (0==J_index) {
     read(N_sys*N_sys,J_z,"J4.txt");
@@ -53,8 +57,8 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     read(N,h_z,"h4.txt");
     read(N,h_x,"h4x.txt");
     read(N,h_y,"h4y.txt");
-    gs_sol=119;
-    cout<<"For J_index = 0, solution state set to : "<<gs_sol<<endl;
+    gs_sol=119;/*the solution ground state for this Hamiltonian.*/
+    cout<<"For J_index = 0, solution state is set to : "<<gs_sol<<endl;
   } else {
     cout<<"For J_index != 0, read in file from the path: ";
 
@@ -66,21 +70,24 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
     string J_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/J");
     string h_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/h");
     string s_str("/home0/t.hsu/Documents/2016_WS_MT/8spin/s");
-    string tmp_str;
-
-    tmp_str=J_str+index_str+".txt";
-
     // ostringstream strs;
     // strs<<"/home0/t.hsu/Documents/2016_WS_MT/8spin/J"<<(J_index)<<".txt";
     // string str=strs.str();
+
+    string tmp_str;
+    /*read in Jz*/
+    tmp_str=J_str+index_str+".txt";
     const char *testChars = tmp_str.c_str();
     cout<<testChars<<endl;
     read(N_sys*N_sys,J_z,testChars);
+    /*read in hz*/
     tmp_str=h_str+index_str+".txt";
     testChars=tmp_str.c_str();
     cout<<testChars<<endl;
     read(N_sys,h_z,testChars);
+
     // string teststr=to_string(1);
+    /*read in ground state index*/
     tmp_str=s_str+index_str+".txt";
     testChars=tmp_str.c_str();
     cout<<testChars<<endl;
@@ -95,40 +102,20 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   }
 
 
-
-
-
-
-  // for (int i = 0; i < N_env; i++) {
-  //   for (int j = 0; j < N_env; j++) {
-  //     cout<<Jx_env[i*N_env+j]<<" ";
-  //   }
-  //   cout<<endl;
-  // }
-
-
-
-
-  // for (int i = 0; i < (int)pow(2,N_env); i++) {
-  //   w[i]=0;
-  // }
   /*G is the global factor usually set between -1 and 1.*/
   // G=1.0;
-  // Jenv_generate(N_env,G);//randomly generate J_env
+  // Jenv_generate(N_env,G);/*randomly generate J_env*/
   // G=0.05;
-  // Jse_generate(N_sys,N_env,G);//randomly generate J_se
-  /*the second parameter is Temperature*/
+  // Jse_generate(N_sys,N_env,G);/*randomly generate J_se*/
+
   if (1==env_on) {
     /* initialize the array for the enivironment's partition factor w[], and its eignevector in computational basis z[] */
     z= new complex<double> [(int)pow(2,N_env)*(int)pow(2,N_env)]();
     w= new double [(int)pow(2,N_env)]();
-    environment(N_env,Temperature);//get w[] and z[] with lapack diagonalization.
+    environment(N_env,Temperature);/*get w[] and z[] with lapack diagonalization.*/
   }
 
-  /* Change the global factor
-     Since the way i state in J_se is [-0.1, 0.1]
-     So I multiply 10 to [-1, 1]; 5 to [-0.5,0.5]... etc.
-  */
+  /* Change the coupling factor */
   for (int i = 0; i < N_sys*N_env; i++) {
     Jx_se[i]=Jx_se[i]*G;
     Jy_se[i]=Jy_se[i]*G;
@@ -138,51 +125,36 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
 
 
 
-  /* initialize the wave function in the ground state
-  */
-
+  /* initialize the wave function in the ground state */
   psi_real = new double [nofstates]();
   psi_imaginary = new double [nofstates]();
-  // for (int i = 0; i < nofstates; i++) {
-  //     psi_real[i]      = 0;
-  //     psi_imaginary[i] = 0;
-  // }
   psi_tmp_real = new double [nofstates]();
   psi_tmp_imaginary = new double [nofstates]();
-  // for (int i = 0; i < nofstates; i++) {
-  //   psi_tmp_real[i]      = 0;
-  //   psi_tmp_imaginary[i] = 0;
-  // }
-
   psi_sys_real = new double [(int)pow(2,N_sys)]();
   psi_sys_imaginary = new double [(int)pow(2,N_sys)]();
-  // for (int i = 0; i < (int)pow(2,N_sys); i++) {
-  //   psi_sys_real[i]      = 0;
-  //   psi_sys_imaginary[i] = 0;
-  // }
+
+  /*this funtion can prepare system into some predefine state*/
   set_initial_sys_state("allx");
 
-
-  //initialize the psi function to the random wavefunction
-  if (1==readin_psi_on) {
-    sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
+  /*initialize the psi function to the random wavefunction, if we use random wave function algorithm*/
+  if (1==random_approx_on) {
+    random_product(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
     int M=10000;
     for (int i = 0; i < M; i++) {
-      if (i%1000==0) {
+      if (i%1000==0)
         cout<<".."<<i<<".."<<endl;
-      }
-      exp_appr_op(0,M);
+      exp_appr_op(M);
     }
-    ofstream Psi_r_out("psi_appr_real.dat");
-    ofstream Psi_i_out("psi_appr_imagine.dat");
+    ofstream Psi_r_out("output_psi_appr_real.dat");
+    ofstream Psi_i_out("output_psi_appr_imagine.dat");
     for (int i = 0; i < nofstates; i++) {
         Psi_r_out<<psi_real[i]<<endl;
         Psi_i_out<<psi_imaginary[i]<<endl;
     }
 
-  } else if (0==readin_psi_on) {
-    read(nofstates,psi_real,"psi_appr_real.dat");
-    read(nofstates,psi_imaginary,"psi_appr_imagine.dat");
+  } else if (0==random_approx_on) {
+    read(nofstates,psi_real,"output_psi_appr_real.dat");
+    read(nofstates,psi_imaginary,"output_psi_appr_imagine.dat");
     cout<<"Read for psi_real and psi_imaginary after exp_appr function"<<endl;
   } else {
     cout<<"Something go wrong with exp_appr_op() during Initialization";
@@ -197,14 +169,6 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   ss_operator_imaginary = new double [4]();
   ds_operator_real      = new double [8]();
   ds_operator_imaginary = new double [8]();
-  // for (int i = 0; i < 4; i++) {
-  //   ss_operator_real[i]      = 0;
-  //   ss_operator_imaginary[i] = 0;
-  // }
-  // for (int i = 0; i < 8; i++) {
-  //   ds_operator_real[i]      = 0;
-  //   ds_operator_imaginary[i] = 0;
-  // }
 
   // /* uncommend if want to use spin_allinone(); */
   // psi_tmp_x_real=new double [nofstates];
@@ -218,25 +182,14 @@ void spin_system::initialize(int N_sys_user_defined, int N_env_user_defined, dou
   /*set the return measuremt*/
   int total_steps=(int) (T/tau);
 
+  /* prepare array for some mesurable output*/
   spin_return = new double [N*3*(total_steps+1)]();//3 state for x,y,z
-  // for (int i = 0; i < N*3*(total_steps+1); i++){
-  //   spin_return[i]=0.;
-  // }
   energy_sys_return = new double [total_steps+1]();
   energy_env_return = new double [total_steps+1]();
   energy_se_return  = new double [total_steps+1]();
   energy_all_return = new double [total_steps+1]();
   success_probability_return = 0;
-  // for (int i = 0; i < (total_steps+1); i++) {
-  //   energy_sys_return[i]=0.;
-  //   energy_env_return[i]=0.;
-  //   energy_se_return[i]=0.;
-  //   energy_all_return[i]=0.;
-  // }
   coefficient_return = new double [nofstates]();
-  // for (int i = 0; i < nofstates; i++) {
-  //   coefficient_return[i]=0.;
-  // }
 
   /*set array for skip_zeroterm()*/
   // count_h=0;
@@ -2062,7 +2015,7 @@ void spin_system::set_random(double N_env){
   Side effecht/Changed:
     psi_real[],psi_imaginary[]
 */
-void spin_system::sumaverage(double* array_real, double* array_imagine, double* sys_real, double* sys_imag){
+void spin_system::random_product(double* array_real, double* array_imagine, double* sys_real, double* sys_imag){
   int nos_sys=(int) pow(2,N_sys);
   int nos_env=(int) pow(2,N_env);
 
@@ -2293,7 +2246,7 @@ void spin_system::random_wavef_run(){
 
   double norm=0;
 
-  // sumaverage(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
+  // random_product(psi_real,psi_imaginary,psi_sys_real,psi_sys_imaginary);
   for (int i = 0; i < nofstates; i++) {
     coefficient_return[i]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
   }
@@ -2355,7 +2308,7 @@ void spin_system::random_wavef_run(){
     }
     output<<endl;
 
-    
+
     for (int i = gs_sol; i < nofstates; i+=256) {
       frequency[step]+=psi_real[i]*psi_real[i]+psi_imaginary[i]*psi_imaginary[i];
     }
