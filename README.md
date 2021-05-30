@@ -1,4 +1,4 @@
-# Quantum Annealing Simulation
+# Quantum Annealing Simulation (No Longer Actively Maintained)
 
 ## Introduction
 
